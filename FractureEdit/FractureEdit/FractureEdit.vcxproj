@@ -57,7 +57,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>EdPCH.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -93,6 +93,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\EditorApplication.cpp" />
+    <ClCompile Include="src\EditorContexts\AssetManagerContext.cpp" />
+    <ClCompile Include="src\EditorContexts\Inspector.cpp" />
+    <ClCompile Include="src\EditorContexts\LevelEditor.cpp" />
+    <ClCompile Include="src\EditorContexts\Panels\TransformComponentPanel.cpp" />
+    <ClCompile Include="src\EditorContexts\Scenegraph.cpp" />
+    <ClCompile Include="src\EditorContexts\Viewport.cpp" />
     <ClCompile Include="src\EdPCH.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EdPCH.h</PrecompiledHeaderFile>
@@ -100,10 +106,59 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">EdPCH.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="vendor\includes\imgui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\ImGuizmo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_demo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_impl_glfw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_impl_opengl3.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="vendor\includes\imgui\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EditorApplication.h" />
+    <ClInclude Include="src\EditorContexts\AssetManagerContext.h" />
+    <ClInclude Include="src\EditorContexts\EditingContext.h" />
+    <ClInclude Include="src\EditorContexts\Inspector.h" />
+    <ClInclude Include="src\EditorContexts\LevelEditor.h" />
+    <ClInclude Include="src\EditorContexts\Panels\TransformComponentPanel.h" />
+    <ClInclude Include="src\EditorContexts\Scenegraph.h" />
+    <ClInclude Include="src\EditorContexts\Viewport.h" />
     <ClInclude Include="src\EdPCH.h" />
+    <ClInclude Include="vendor\includes\imgui\imconfig.h" />
+    <ClInclude Include="vendor\includes\imgui\imgui.h" />
+    <ClInclude Include="vendor\includes\imgui\ImGuizmo.h" />
+    <ClInclude Include="vendor\includes\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="vendor\includes\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="vendor\includes\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="vendor\includes\imgui\imgui_internal.h" />
+    <ClInclude Include="vendor\includes\imgui\imstb_rectpack.h" />
+    <ClInclude Include="vendor\includes\imgui\imstb_textedit.h" />
+    <ClInclude Include="vendor\includes\imgui\imstb_truetype.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

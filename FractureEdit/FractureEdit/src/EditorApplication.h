@@ -3,17 +3,22 @@
 #include "core/GameWindow.h"
 #include "rendering/Device.h"
 
+#include "EditorContexts/LevelEditor.h"
+
 namespace Fracture
 {
-	//class GameWindow;
-	//class Device;
 
 	class EditorApplication
 	{
 
 		std::unique_ptr<GameWindow> mWindow;
 		std::unique_ptr<Device> mGraphicsDevice;
+
+		std::unique_ptr<LevelEditor> mLevelEditor;
+
 		bool IsRunning = true;
+
+		static bool opt_padding;
 
 	public:
 		EditorApplication();
@@ -21,13 +26,18 @@ namespace Fracture
 		void Init();
 		void Run();
 		void Update();
-		void OnUpdate(float dt);
-		void OnRenderBegin();
 		void Render();
 		void Shutdown();
 
+		void DrawMenubar();
+
 		void Close();
 
+		void GuiStyle();
+
+	private:
+
+		bool _ShowLevelEditor = true;
 		
 
 	};

@@ -13,6 +13,10 @@ namespace Fracture
 		ScenegraphView();
 		void OnUpdate();
 		void OnRender(bool* p_open, Device* device);
+		void DrawEntity(const UUID& entity);
+
+	private:
+		UUID Selection;
 
 	};
 }

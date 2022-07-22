@@ -9,13 +9,11 @@ Fracture::Viewport::Viewport()
 
 void Fracture::Viewport::OnUpdate()
 {
-	
 
-	CameraSystem system;
-
-	system.Update(*mViewportCamera.get(), (1.0f / 60.0f));
-	system.UpdateViewMatrix(*mViewportCamera.get());
-	system.UpdateProjectionMatrix(*mViewportCamera.get(),m_ViewportSize);
+	//CameraSystem system;
+	//system.Update(*mViewportCamera.get(), (1.0f / 60.0f));
+	//system.UpdateViewMatrix(*mViewportCamera.get());
+	//system.UpdateProjectionMatrix(*mViewportCamera.get(),m_ViewportSize);
 
 }
 
@@ -23,6 +21,8 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 {
 	ImGui::Begin("Viewport");
 	m_ViewportSize = { ImGui::GetContentRegionAvail().x ,  ImGui::GetContentRegionAvail().y };
+	m_ViewportFocused = ImGui::IsWindowFocused();
+	m_ViewportHovered = ImGui::IsWindowHovered();
 
 
 	const auto& buffer = device->GeometryContext()->PostProcessReadTarget()->ColorAttachments[0];
@@ -55,4 +55,14 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 Fracture::CameraComponent* Fracture::Viewport::ViewportCamera()
 {
 	return mViewportCamera.get();
+}
+
+bool Fracture::Viewport::IsFocused()
+{
+	return m_ViewportFocused;
+}
+
+bool Fracture::Viewport::IsHovered()
+{
+	return m_ViewportHovered;
 }

@@ -6,12 +6,13 @@
 #include "assets/TextureLoader.h"
 #include "rendering/Buffer.h"
 #include "core/CameraSystem.h"
+#include "input/Input.h"
 
 bool Fracture::EditorApplication::opt_padding;
 
 std::unique_ptr<Fracture::RenderGraph> mGraph;
 
-
+std::unique_ptr<Fracture::Input> Fracture::EditorApplication::mInput;
 std::unique_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
 
 Fracture::EditorApplication::EditorApplication()
@@ -43,8 +44,8 @@ void Fracture::EditorApplication::Init()
 		Assets->Init();
 	}	
 	{
-		mInput = std::make_unique<Input>();
-		mInput->Init(mWindow->Context());
+		mInput = std::make_unique<Input>(mWindow->Context());
+		//mInput->Init();
 	}
 
 	{
@@ -144,6 +145,8 @@ void Fracture::EditorApplication::Init()
 		p.HasParent = true;
 		mCurrentScene->AddHierachyComponent(entity, p);
 	}
+
+	mCurrentContext = mLevelEditor.get();
 }
 
 void Fracture::EditorApplication::Run()
@@ -170,11 +173,14 @@ void Fracture::EditorApplication::Run()
 void Fracture::EditorApplication::Update()
 {
 	mOutlineRenderer->Begin();
-	mDebugRenderer->Begin();
-	
-	//const glm::vec2& mouse{ Input::GetMousePosition().x,Input::GetMousePosition().y };
-	//mouse_delta = (mouse - m_InitialMousePosition) * 0.03f;
-	//m_InitialMousePosition = mouse;
+	mDebugRenderer->Begin();	
+
+
+	if (mCurrentContext)
+	{
+		mCurrentContext->OnUpdate();
+	}
+
 
 	CameraSystem system;
 	for (const auto& camera : mCurrentScene->CameraComponents)
@@ -185,10 +191,7 @@ void Fracture::EditorApplication::Update()
 	}
 
 
-	if (mCurrentContext)
-	{
-		mCurrentContext->OnUpdate();
-	}
+	
 }
 
 
@@ -260,6 +263,7 @@ void Fracture::EditorApplication::Render()
 				
 			if (ImGui::BeginTabItem("Level Editor", &_ShowLevelEditor))
 			{
+				mCurrentContext = mLevelEditor.get();
 				mLevelEditor->OnRender(&_ShowLevelEditor,mGraphicsDevice.get());
 				ImGui::EndTabItem();
 			}

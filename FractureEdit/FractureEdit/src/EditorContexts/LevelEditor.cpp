@@ -1,6 +1,7 @@
 #include "EdPCH.h"
 #include "LevelEditor.h"
 #include "../EditorApplication.h"
+#include "core/CameraSystem.h"
 
 Fracture::LevelEditor::LevelEditor()
 {
@@ -19,6 +20,53 @@ void Fracture::LevelEditor::OnInit()
 
 void Fracture::LevelEditor::OnUpdate()
 {
+	float dt = 1.0f / 60.0f;
+	const glm::vec2& mouse{ Input::GetMousePosition().x,Input::GetMousePosition().y };
+	mouse_delta = (mouse - m_InitialMousePosition) * 0.03f;
+	m_InitialMousePosition = mouse;
+
+	if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && mSceneView->IsHovered() || ImGui::IsMouseDown(ImGuiMouseButton_Right) && mSceneView->IsFocused())
+	{
+		CameraSystem system;
+		const auto& camera = EditorApplication::CurrentScene()->GetCameraComponent(EditorApplication::CurrentScene()->ActiveCamera);
+		glm::vec3 pos = camera->Position;
+		if (camera)
+		{
+			if (Input::IsKeyDown(KeyCode::W))
+			{
+				pos += camera->Front * camera->Speed * dt * 1000.0f;
+			}
+			if (Input::IsKeyDown(KeyCode::A))
+			{
+				pos -= camera->Right * camera->Speed * dt * 1000.0f;
+			}
+			if (Input::IsKeyDown(KeyCode::S))
+			{
+				pos -= camera->Front * camera->Speed * dt * 1000.0f;
+			}
+			if (Input::IsKeyDown(KeyCode::D))
+			{
+				pos += camera->Right * camera->Speed * dt * 1000.0f;
+			}
+			if (Input::IsKeyDown(KeyCode::Q))
+			{
+				pos += camera->Up * camera->Speed * dt * 1000.0f;
+			}
+			if (Input::IsKeyDown(KeyCode::E))
+			{
+				pos -= camera->Up * camera->Speed * dt * 1000.0f;
+			}
+			//if (Input::IsMouseScroll())
+			//{
+				//mCameraSystem->OnZoom(*camera, Input::GetMouseScroll().y * evnt->dt * 1000.0f);
+			//}
+
+			system.OnMouseInput(*camera, mouse_delta.x, mouse_delta.y, false);
+			system.OnTranslate(*camera, pos.x, pos.y, pos.z);
+		}
+
+
+	}
 	mSceneView->OnUpdate();
 
 }

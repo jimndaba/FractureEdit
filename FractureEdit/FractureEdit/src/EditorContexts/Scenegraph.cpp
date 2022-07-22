@@ -1,5 +1,6 @@
 #include "EdPCH.h"
 #include "Scenegraph.h"
+#include "EditorApplication.h"
 
 Fracture::ScenegraphView::ScenegraphView()
 {
@@ -21,14 +22,55 @@ void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 
 	ImGui::TableHeadersRow();
 	ImGui::TableNextRow();
-	
-	for (int i = 0; i < 10; i++)
+
+	if (EditorApplication::CurrentScene())
 	{
-		ImGui::TableNextColumn();
-		ImGui::TreeNodeEx("GameObject", flags);
-		ImGui::TableNextColumn();
-	}
+		DrawEntity(EditorApplication::CurrentScene()->RootEntity);
+	}	
 
 	ImGui::EndTable();
+
+	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered() && !ImGui::GetIO().KeyShift)
+	{
+		//ClearSelection();
+	}
+
 	ImGui::End();
+}
+
+void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
+{
+	const auto& tag = EditorApplication::CurrentScene()->GetTagComponent(entity);
+	bool isSelected = false;
+	ImGuiTreeNodeFlags flags;
+
+	if (tag)
+	{
+		flags = ((Selection == entity) ? ImGuiTreeNodeFlags_Selected : isSelected) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
+
+
+		const auto& hierachy = EditorApplication::CurrentScene()->GetHierachyComponent(entity);
+
+		if (hierachy->Children.empty())
+		{
+			flags |= ImGuiTreeNodeFlags_Leaf;
+		}
+
+		ImGui::TableNextColumn();
+		bool opened = ImGui::TreeNodeEx(std::to_string((uint32_t)entity).c_str(), flags, tag->Name.c_str());
+		if (ImGui::IsItemClicked())
+		{
+			//SelectEntity(entity);
+		}
+		ImGui::TableNextColumn();
+
+		if (opened)
+		{
+			for (const auto& child : hierachy->Children)
+			{
+				DrawEntity(child);
+			}
+			ImGui::TreePop();
+		}
+	}
 }

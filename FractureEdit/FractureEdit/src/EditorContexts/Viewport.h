@@ -16,9 +16,14 @@ namespace Fracture
 
 		CameraComponent* ViewportCamera();
 
+		bool IsFocused();
+		bool IsHovered();
+
 	private:
 		std::unique_ptr<CameraComponent> mViewportCamera;
 		glm::vec2 m_ViewportSize;
+		bool m_ViewportFocused;
+		bool m_ViewportHovered;
 	
 	};
 }

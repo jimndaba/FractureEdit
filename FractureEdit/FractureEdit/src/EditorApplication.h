@@ -20,7 +20,7 @@ namespace Fracture
 		std::unique_ptr<Device> mGraphicsDevice;
 		std::unique_ptr<LevelEditor> mLevelEditor;
 		std::unique_ptr<AssetManager> Assets;
-		std::unique_ptr<Input> mInput;
+		static std::unique_ptr<Input> mInput;
 
 		std::unique_ptr<OutlineRenderer> mOutlineRenderer;
 		std::unique_ptr<SceneRenderer> mSceneRenderer;

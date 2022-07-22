@@ -21,6 +21,9 @@ namespace Fracture
 
 	class LevelEditor : public EditingContext
 	{
+		glm::vec2 m_InitialMousePosition = glm::vec2(0.0f);
+		glm::vec2 mouse_delta = glm::vec2(0.0f);
+
 	public:
 		LevelEditor();
 		void OnInit();

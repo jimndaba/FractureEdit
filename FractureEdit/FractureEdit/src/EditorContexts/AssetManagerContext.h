@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ASSETMANAGER_H
-#define ASSETMAANGER_H
+#ifndef ASSETMANAGERCONTEXT_H
+#define ASSETMANAGERCONTEXT_H
 
 
 
@@ -12,8 +12,8 @@ namespace Fracture
 	{
 	public:
 		AssetManagerContext();
-
-		void OnRender(bool* p_open);
+		void OnUpdate();
+		void OnRender(bool* p_open,Device* device);
 
 
 	};

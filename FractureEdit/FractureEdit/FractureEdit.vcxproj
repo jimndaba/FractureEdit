@@ -77,7 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>EdPCH.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -97,6 +97,7 @@
     <ClCompile Include="src\EditorContexts\Inspector.cpp" />
     <ClCompile Include="src\EditorContexts\LevelEditor.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\TransformComponentPanel.cpp" />
+    <ClCompile Include="src\EditorContexts\Panels\UIElement.cpp" />
     <ClCompile Include="src\EditorContexts\Scenegraph.cpp" />
     <ClCompile Include="src\EditorContexts\Viewport.cpp" />
     <ClCompile Include="src\EdPCH.cpp">
@@ -106,6 +107,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">EdPCH.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Project\FractureProject.cpp" />
     <ClCompile Include="vendor\includes\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -146,9 +148,11 @@
     <ClInclude Include="src\EditorContexts\Inspector.h" />
     <ClInclude Include="src\EditorContexts\LevelEditor.h" />
     <ClInclude Include="src\EditorContexts\Panels\TransformComponentPanel.h" />
+    <ClInclude Include="src\EditorContexts\Panels\UIElement.h" />
     <ClInclude Include="src\EditorContexts\Scenegraph.h" />
     <ClInclude Include="src\EditorContexts\Viewport.h" />
     <ClInclude Include="src\EdPCH.h" />
+    <ClInclude Include="src\Project\FractureProject.h" />
     <ClInclude Include="vendor\includes\imgui\imconfig.h" />
     <ClInclude Include="vendor\includes\imgui\imgui.h" />
     <ClInclude Include="vendor\includes\imgui\ImGuizmo.h" />

@@ -1,9 +1,18 @@
 #include "EdPCH.h"
 #include "EditorApplication.h"
 #include "EditorContexts/LevelEditor.h"
+#include "rendering/RenderGraph.h"
+
+#include "assets/TextureLoader.h"
+#include "rendering/Buffer.h"
+#include "core/CameraSystem.h"
 
 bool Fracture::EditorApplication::opt_padding;
 
+std::unique_ptr<Fracture::RenderGraph> mGraph;
+
+
+std::unique_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
 
 Fracture::EditorApplication::EditorApplication()
 {
@@ -11,6 +20,14 @@ Fracture::EditorApplication::EditorApplication()
 
 void Fracture::EditorApplication::Init()
 {
+	{
+		// Setting memory allocators
+		OPTICK_SET_MEMORY_ALLOCATOR(
+			[](size_t size) -> void* { return operator new(size); },
+			[](void* p) { operator delete(p); },
+			[]() { /* Do some TLS initialization here if needed */ }
+		);
+	}
 	{
 		WindowDescription desc;
 		mWindow = std::make_unique<GameWindow>(desc);
@@ -21,7 +38,53 @@ void Fracture::EditorApplication::Init()
 		mGraphicsDevice = std::make_unique<Device>();
 		mGraphicsDevice->Init();
 	}
+	{
+		Assets = std::make_unique<AssetManager>();
+		Assets->Init();
+	}	
+	{
+		mInput = std::make_unique<Input>();
+		mInput->Init(mWindow->Context());
+	}
 
+	{
+		//TODO - Asset File needs to Have Register of converted files
+		//Assets->AddStaticMesh("Helmet", "Content\\meshes\\Helmet\\HEML1.fbx");
+		Assets->AddStaticMesh("Cube", "Content\\meshes\\Primitives\\Cube.gltf");
+		Assets->AddStaticMesh("Cylinder", "Content\\meshes\\Primitives\\Cylinder.gltf");
+		Assets->AddStaticMesh("Sphere", "Content\\meshes\\Primitives\\Sphere.gltf");
+		Assets->AddStaticMesh("Suzanne", "Content\\meshes\\Primitives\\Suzanne.gltf");
+		Assets->AddStaticMesh("Torus", "Content\\meshes\\Primitives\\Torus.gltf");
+		Assets->AddStaticMesh("Cone", "Content\\meshes\\Primitives\\Cone.gltf");
+		Assets->AddStaticMesh("Plane", "Content\\meshes\\Primitives\\Plane.gltf");
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\PointlightIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "PointlightIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		mSceneRenderer = std::make_unique<SceneRenderer>();
+		mSceneRenderer->Init();
+
+		mOutlineRenderer = std::make_unique<OutlineRenderer>(Device::OutlineContext());
+		mOutlineRenderer->Init();
+
+		mDebugRenderer = std::make_unique<DebugRenderer>(Device::DebugContext());
+		mDebugRenderer->Init();
+	}
+
+	{
+		mGraph = std::make_unique<RenderGraph>();
+		mGraph->Setup();
+	}
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -48,12 +111,39 @@ void Fracture::EditorApplication::Init()
 		std::cout << "FAILED TO INIT IMGUI OPENGL" << "\n";
 	}
 
-	ImFont* pFont = io.Fonts->AddFontFromFileTTF("Content/fonts/Nunito-Bold.TTF", 18.0f);
+	ImFont* pFont = io.Fonts->AddFontFromFileTTF("Content/fonts/Nunito-Bold.TTF", 14.0f);
 
 	GuiStyle();
 
-	mLevelEditor = std::make_unique<LevelEditor>();
-	mLevelEditor->OnInit();
+	{
+		mLevelEditor = std::make_unique<LevelEditor>();
+		mLevelEditor->OnInit();
+	}
+
+	mCurrentScene = std::make_unique<Scene>();
+	
+	{
+		auto camera = mCurrentScene->AddEntity();
+		mCurrentScene->AddTagComponent(camera, "Camera");
+		mCurrentScene->AddTransformComponent(camera);
+		mCurrentScene->AddCameraComponent(camera);
+		HierachyParams p;
+		p.Parent = mCurrentScene->RootEntity;
+		p.HasParent = true;
+		mCurrentScene->AddHierachyComponent(camera, p);
+		mCurrentScene->ActiveCamera = camera;
+	}
+	{
+		auto entity = mCurrentScene->AddEntity();
+		mCurrentScene->AddTagComponent(entity, "Suzanne");
+		mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+		mCurrentScene->AddStaticMeshComponent(entity, "Suzanne", Assets->GetStaticMesh("Suzanne"));
+
+		HierachyParams p;
+		p.Parent = mCurrentScene->RootEntity;
+		p.HasParent = true;
+		mCurrentScene->AddHierachyComponent(entity, p);
+	}
 }
 
 void Fracture::EditorApplication::Run()
@@ -62,13 +152,16 @@ void Fracture::EditorApplication::Run()
 
 	while (!mWindow->ShoulWindowClose() && IsRunning)
 	{
+		OPTICK_FRAME("MainThread");
+		mWindow->PollEvents();
+
 		mGraphicsDevice->Begin();
 		
 		Update();	
 		Render();
 
 		mWindow->SwapBuffers();
-		mWindow->PollEvents();
+
 	}
 
 	Shutdown();
@@ -76,11 +169,53 @@ void Fracture::EditorApplication::Run()
 
 void Fracture::EditorApplication::Update()
 {
+	mOutlineRenderer->Begin();
+	mDebugRenderer->Begin();
+	
+	//const glm::vec2& mouse{ Input::GetMousePosition().x,Input::GetMousePosition().y };
+	//mouse_delta = (mouse - m_InitialMousePosition) * 0.03f;
+	//m_InitialMousePosition = mouse;
+
+	CameraSystem system;
+	for (const auto& camera : mCurrentScene->CameraComponents)
+	{
+		system.Update(*camera,1.0f/60.0f);
+		system.UpdateViewMatrix(*camera);
+		system.UpdateProjectionMatrix(*camera, Device::ScreenSize());
+	}
+
+
+	if (mCurrentContext)
+	{
+		mCurrentContext->OnUpdate();
+	}
 }
 
 
 void Fracture::EditorApplication::Render()
 {
+	{
+		const auto& camera = EditorApplication::CurrentScene()->GetCameraComponent(EditorApplication::CurrentScene()->ActiveCamera);
+		mSceneRenderer->Begin(EditorApplication::CurrentScene(), camera, Device::GeometryContext());
+		mSceneRenderer->End(Device::GeometryContext());
+
+
+		Device::GeometryContext()->Begin();
+		Device::GeometryContext()->BindRenderTarget(0);
+		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+		Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
+
+		mGraph->Run(*EditorApplication::CurrentScene());
+
+		Device::GeometryContext()->BindRenderTarget(0);
+		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+
+		mOutlineRenderer->End();
+		mDebugRenderer->End(camera);
+
+		Device::SubmitToGpu();
+	}
+
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -89,76 +224,68 @@ void Fracture::EditorApplication::Render()
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
 	ImGuiIO& io = ImGui::GetIO();
+	
 	DrawMenubar();
 
 
-	if (ImGui::BeginTabBar("Contexts"))
+	bool p_open = true;
+	//static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+	if (!opt_padding)
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+
+
+	if (ImGui::Begin("Editor", NULL, window_flags))
 	{
-		static bool opt_fullscreen = true;
-		bool p_open = true;
-
-		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-
-		///Submit the DockSpace
-
-
-		if (opt_fullscreen)
-		{
-			const ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->WorkPos);
-			ImGui::SetNextWindowSize(viewport->WorkSize);
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-		else
-		{
-			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-		}
-
-		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-			window_flags |= ImGuiWindowFlags_NoBackground;
-
-		if (!opt_padding)
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-
-
-		ImGui::Begin("DockSpace Demo", &p_open, window_flags);
 
 		if (!opt_padding)
 			ImGui::PopStyleVar();
 
-
-		if (opt_fullscreen)
-			ImGui::PopStyleVar(2);
+		ImGui::PopStyleVar(2);
 
 
-		if (_ShowLevelEditor)
+		if (ImGui::BeginTabBar("Contexts"))
 		{
-			mLevelEditor->OnRender(&_ShowLevelEditor);
-		}
-	
-		if (ImGui::BeginTabItem("RenderGraph Editor", &_ShowLevelEditor))
-		{
-
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Audio Editor", &_ShowLevelEditor))
-		{
-
-			ImGui::EndTabItem();
-		}
-
+			///Submit the DockSpace
+				
+			if (ImGui::BeginTabItem("Level Editor", &_ShowLevelEditor))
+			{
+				mLevelEditor->OnRender(&_ShowLevelEditor,mGraphicsDevice.get());
+				ImGui::EndTabItem();
+			}
 			
+			if (ImGui::BeginTabItem("RenderGraph Editor", &_ShowGrapEditor))
+			{
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Audio Editor", &_ShowAudiEditor))
+			{
+
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+
+		ImGui::SameLine(ImGui::GetContentRegionMax().x * 0.5f);
+		ImGui::Button("Play");
+		ImGui::SameLine();
+		ImGui::Button("Pause");
+
+
 		ImGui::End();
-		ImGui::EndTabBar();
 	}
-
-
-
+	
 	
 
 
@@ -173,14 +300,18 @@ void Fracture::EditorApplication::Render()
 	}
 	
 
-	Device::SubmitToGpu();
-
+	
 
 
 }
 
 void Fracture::EditorApplication::Shutdown()
 {
+	// Cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+	OPTICK_SHUTDOWN();
 }
 
 void Fracture::EditorApplication::DrawMenubar()
@@ -188,6 +319,26 @@ void Fracture::EditorApplication::DrawMenubar()
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
+		{
+			ImGui::MenuItem("New");
+			ImGui::MenuItem("Open");
+			ImGui::Separator();
+			ImGui::MenuItem("Save");
+			ImGui::Separator();
+			ImGui::MenuItem("Close");
+			ImGui::Separator();
+			ImGui::MenuItem("Exit");
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit"))
+		{
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit"))
+		{
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Help"))
 		{
 			ImGui::EndMenu();
 		}
@@ -299,4 +450,9 @@ void Fracture::EditorApplication::GuiStyle()
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 #endif
+}
+
+Fracture::Scene* Fracture::EditorApplication::CurrentScene()
+{
+	return mCurrentScene.get();
 }

@@ -2,12 +2,19 @@
 #ifndef LEVELEDITOR_H
 #define LEVELEDITOR_H
 
+#include "Scenegraph.h"
+#include "Inspector.h"
+#include "Viewport.h"
+#include "AssetManagerContext.h"
+
 #include "EditingContext.h"
 
-#include "EditorContexts/Scenegraph.h"
-#include "EditorContexts/Inspector.h"
-#include "EditorContexts/Viewport.h"
-#include "EditorContexts/AssetManagerContext.h"
+
+#include "rendering/OutlineRenderer.h"
+#include "rendering/SceneRenderer.h"
+#include "rendering/DebugRenderer.h"
+
+#include "rendering/RenderGraph.h"
 
 namespace Fracture
 {
@@ -17,7 +24,9 @@ namespace Fracture
 	public:
 		LevelEditor();
 		void OnInit();
-		void OnRender(bool* p_open);
+		void OnUpdate();
+		void OnRender(bool* p_open, Device* device);
+		void RenderToolbar();
 
 		std::unique_ptr<ScenegraphView> mSceneGraph;
 		std::unique_ptr<Inspector> mInspector;

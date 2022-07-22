@@ -6,7 +6,11 @@ Fracture::Inspector::Inspector()
 	mTranfoms = std::make_unique<TransfromComponentPanel>();
 }
 
-void Fracture::Inspector::OnRender(bool* p_open)
+void Fracture::Inspector::OnUpdate()
+{
+}
+
+void Fracture::Inspector::OnRender(bool* p_open, Device* device)
 {
 	ImGui::Begin("Inspector");
 

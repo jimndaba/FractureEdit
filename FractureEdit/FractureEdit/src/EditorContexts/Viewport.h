@@ -11,9 +11,14 @@ namespace Fracture
 	{
 	public:
 		Viewport();
+		void OnUpdate();
+		void OnRender(bool* p_open, Device* device);
 
-		void OnRender(bool* p_open);
+		CameraComponent* ViewportCamera();
 
+	private:
+		std::unique_ptr<CameraComponent> mViewportCamera;
+		glm::vec2 m_ViewportSize;
 	
 	};
 }

@@ -2,16 +2,17 @@
 #ifndef TRANSFORMPANEL_H
 #define TRANSFORMPANEL_H
 
+#include "UIElement.h"
 
 namespace Fracture
 {
-	struct TransfromComponentPanel
+	struct TransfromComponentPanel : UIElement
 	{
 		TransfromComponentPanel();
 		void OnRender(bool* p_open);
 		//TransformComponent* component;
 
-		bool Property(const std::string& label, glm::vec3& value, float reset_value = 0);
+		
 
 	};
 

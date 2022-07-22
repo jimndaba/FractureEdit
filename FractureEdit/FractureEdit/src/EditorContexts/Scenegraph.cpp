@@ -5,7 +5,11 @@ Fracture::ScenegraphView::ScenegraphView()
 {
 }
 
-void Fracture::ScenegraphView::OnRender(bool* p_open)
+void Fracture::ScenegraphView::OnUpdate()
+{
+}
+
+void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 {
 	ImGui::Begin("Scenegraph");
 	ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersInnerV;

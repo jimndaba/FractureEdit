@@ -12,8 +12,8 @@ namespace Fracture
 	{
 	public:
 		Inspector();
-
-		void OnRender(bool* p_open);
+		void OnUpdate();
+		void OnRender(bool* p_open, Device* device);
 
 		std::unique_ptr<TransfromComponentPanel> mTranfoms;
 

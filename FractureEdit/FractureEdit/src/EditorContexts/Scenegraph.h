@@ -11,8 +11,8 @@ namespace Fracture
 	{
 	public:
 		ScenegraphView();
-
-		void OnRender(bool* p_open);
+		void OnUpdate();
+		void OnRender(bool* p_open, Device* device);
 
 	};
 }

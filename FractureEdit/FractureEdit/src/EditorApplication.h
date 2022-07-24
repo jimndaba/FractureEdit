@@ -9,6 +9,7 @@
 #include "rendering/SceneRenderer.h"
 #include "rendering/DebugRenderer.h"
 #include "input/Input.h"
+#include "events/Eventbus.h"
 
 namespace Fracture
 {
@@ -20,13 +21,10 @@ namespace Fracture
 		std::unique_ptr<Device> mGraphicsDevice;
 		std::unique_ptr<LevelEditor> mLevelEditor;
 		std::unique_ptr<AssetManager> Assets;
+		static std::unique_ptr<Eventbus> EventDispatcher;
 		static std::unique_ptr<Input> mInput;
 
-		std::unique_ptr<OutlineRenderer> mOutlineRenderer;
-		std::unique_ptr<SceneRenderer> mSceneRenderer;
-		std::unique_ptr<DebugRenderer> mDebugRenderer;
-		std::unique_ptr<RenderGraph> mGraph;
-
+		
 		static std::unique_ptr<Scene> mCurrentScene;
 		bool IsRunning = true;
 
@@ -40,14 +38,14 @@ namespace Fracture
 		void Update();
 		void Render();
 		void Shutdown();
-
 		void DrawMenubar();
-
 		void Close();
-
 		void GuiStyle();
-
+		static Eventbus* Dispatcher();
 		static Scene* CurrentScene();
+
+		static int NextGuiID();
+
 
 	private:
 
@@ -56,7 +54,7 @@ namespace Fracture
 		bool _ShowAudiEditor = true;
 
 		EditingContext* mCurrentContext;
-
+		static int mGuiID;
 	};
 
 

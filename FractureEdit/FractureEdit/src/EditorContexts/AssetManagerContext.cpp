@@ -1,7 +1,7 @@
 #include "EdPCH.h"
 #include "AssetManagerContext.h"
 
-Fracture::AssetManagerContext::AssetManagerContext()
+Fracture::AssetManagerContext::AssetManagerContext() : EditingContext()
 {
 }
 

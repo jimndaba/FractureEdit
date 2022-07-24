@@ -3,18 +3,17 @@
 #include "core/CameraSystem.h"
 #include "rendering/Texture.h"
 
-Fracture::Viewport::Viewport()
+Fracture::Viewport::Viewport() :EditingContext()
 {
+}
+
+void Fracture::Viewport::OnInit()
+{
+	mViewportCamera = std::make_unique<CameraComponent>(UUID());
 }
 
 void Fracture::Viewport::OnUpdate()
 {
-
-	//CameraSystem system;
-	//system.Update(*mViewportCamera.get(), (1.0f / 60.0f));
-	//system.UpdateViewMatrix(*mViewportCamera.get());
-	//system.UpdateProjectionMatrix(*mViewportCamera.get(),m_ViewportSize);
-
 }
 
 void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)

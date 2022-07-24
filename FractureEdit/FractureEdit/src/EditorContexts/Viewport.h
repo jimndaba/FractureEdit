@@ -11,6 +11,7 @@ namespace Fracture
 	{
 	public:
 		Viewport();
+		void OnInit();
 		void OnUpdate();
 		void OnRender(bool* p_open, Device* device);
 

@@ -6,6 +6,7 @@
 #include "assets/TextureLoader.h"
 #include "rendering/Buffer.h"
 #include "core/CameraSystem.h"
+#include "core/TransformSystem.h"
 #include "input/Input.h"
 
 bool Fracture::EditorApplication::opt_padding;
@@ -14,6 +15,8 @@ std::unique_ptr<Fracture::RenderGraph> mGraph;
 
 std::unique_ptr<Fracture::Input> Fracture::EditorApplication::mInput;
 std::unique_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
+std::unique_ptr<Fracture::Eventbus> Fracture::EditorApplication::EventDispatcher;
+int  Fracture::EditorApplication::mGuiID;
 
 Fracture::EditorApplication::EditorApplication()
 {
@@ -44,6 +47,9 @@ void Fracture::EditorApplication::Init()
 		Assets->Init();
 	}	
 	{
+		EventDispatcher = std::make_unique<Eventbus>();
+	}
+	{
 		mInput = std::make_unique<Input>(mWindow->Context());
 		//mInput->Init();
 	}
@@ -71,21 +77,9 @@ void Fracture::EditorApplication::Init()
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
-	{
-		mSceneRenderer = std::make_unique<SceneRenderer>();
-		mSceneRenderer->Init();
 
-		mOutlineRenderer = std::make_unique<OutlineRenderer>(Device::OutlineContext());
-		mOutlineRenderer->Init();
+	mGuiID = -1;
 
-		mDebugRenderer = std::make_unique<DebugRenderer>(Device::DebugContext());
-		mDebugRenderer->Init();
-	}
-
-	{
-		mGraph = std::make_unique<RenderGraph>();
-		mGraph->Setup();
-	}
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -147,6 +141,8 @@ void Fracture::EditorApplication::Init()
 	}
 
 	mCurrentContext = mLevelEditor.get();
+
+
 }
 
 void Fracture::EditorApplication::Run()
@@ -172,8 +168,13 @@ void Fracture::EditorApplication::Run()
 
 void Fracture::EditorApplication::Update()
 {
-	mOutlineRenderer->Begin();
-	mDebugRenderer->Begin();	
+
+
+	
+	{
+		TransformSystem system = TransformSystem(*mCurrentScene.get());
+		system.Update(mCurrentScene->RootEntity, glm::mat4(1.0));
+	}
 
 
 	if (mCurrentContext)
@@ -182,48 +183,18 @@ void Fracture::EditorApplication::Update()
 	}
 
 
-	CameraSystem system;
-	for (const auto& camera : mCurrentScene->CameraComponents)
-	{
-		system.Update(*camera,1.0f/60.0f);
-		system.UpdateViewMatrix(*camera);
-		system.UpdateProjectionMatrix(*camera, Device::ScreenSize());
-	}
-
 
 	
 }
 
-
 void Fracture::EditorApplication::Render()
 {
-	{
-		const auto& camera = EditorApplication::CurrentScene()->GetCameraComponent(EditorApplication::CurrentScene()->ActiveCamera);
-		mSceneRenderer->Begin(EditorApplication::CurrentScene(), camera, Device::GeometryContext());
-		mSceneRenderer->End(Device::GeometryContext());
-
-
-		Device::GeometryContext()->Begin();
-		Device::GeometryContext()->BindRenderTarget(0);
-		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
-		Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
-
-		mGraph->Run(*EditorApplication::CurrentScene());
-
-		Device::GeometryContext()->BindRenderTarget(0);
-		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
-
-		mOutlineRenderer->End();
-		mDebugRenderer->End(camera);
-
-		Device::SubmitToGpu();
-	}
-
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	//ImGuizmo::BeginFrame();
+	mGuiID = -1;
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
 	ImGuiIO& io = ImGui::GetIO();
@@ -456,7 +427,17 @@ void Fracture::EditorApplication::GuiStyle()
 #endif
 }
 
+Fracture::Eventbus* Fracture::EditorApplication::Dispatcher()
+{
+	return EventDispatcher.get();
+}
+
 Fracture::Scene* Fracture::EditorApplication::CurrentScene()
 {
 	return mCurrentScene.get();
+}
+
+int Fracture::EditorApplication::NextGuiID()
+{
+	return mGuiID += 1;
 }

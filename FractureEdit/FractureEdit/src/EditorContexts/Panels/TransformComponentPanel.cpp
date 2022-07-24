@@ -1,8 +1,9 @@
 #include "EdPCH.h"
 #include "TransformComponentPanel.h"
+#include "core/Components.h"
 
-
-Fracture::TransfromComponentPanel::TransfromComponentPanel()
+Fracture::TransfromComponentPanel::TransfromComponentPanel(TransformComponent* transform):
+	component(transform)
 {
 }
 
@@ -18,15 +19,9 @@ void Fracture::TransfromComponentPanel::OnRender(bool* p_open)
 		ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersH;
 
 		ImGui::BeginTable("TransformComps", 4, flags);
-
-		glm::vec3 pos;
-		glm::vec3 sc;
-		glm::vec3 rot;
-
-		Property("Position", pos);
-		Property("Scale", sc);
-		Property("Rotation ",rot);
-
+		Property("Position", component->Position);
+		Property("Scale", component->Scale);
+		Property("Rotation ", component->Rotation);
 		ImGui::EndTable();
 
 		ImGui::TreePop();

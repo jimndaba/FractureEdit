@@ -2,7 +2,7 @@
 #include "Scenegraph.h"
 #include "EditorApplication.h"
 
-Fracture::ScenegraphView::ScenegraphView()
+Fracture::ScenegraphView::ScenegraphView():EditingContext()
 {
 }
 
@@ -32,7 +32,8 @@ void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 
 	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered() && !ImGui::GetIO().KeyShift)
 	{
-		//ClearSelection();
+		EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(Selection));
+		Selection = UUID();
 	}
 
 	ImGui::End();
@@ -60,7 +61,8 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 		bool opened = ImGui::TreeNodeEx(std::to_string((uint32_t)entity).c_str(), flags, tag->Name.c_str());
 		if (ImGui::IsItemClicked())
 		{
-			//SelectEntity(entity);
+			EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+			Selection = entity;
 		}
 		ImGui::TableNextColumn();
 

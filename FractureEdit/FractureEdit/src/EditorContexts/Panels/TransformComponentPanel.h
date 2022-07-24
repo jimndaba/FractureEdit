@@ -6,13 +6,13 @@
 
 namespace Fracture
 {
+	struct TransformComponent;
+
 	struct TransfromComponentPanel : UIElement
 	{
-		TransfromComponentPanel();
+		TransfromComponentPanel(TransformComponent* transform);
 		void OnRender(bool* p_open);
-		//TransformComponent* component;
-
-		
+		TransformComponent* component;
 
 	};
 

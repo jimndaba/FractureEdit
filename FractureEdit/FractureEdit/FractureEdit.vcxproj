@@ -92,8 +92,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\EditorActions\LevelEditorEvents.cpp" />
     <ClCompile Include="src\EditorApplication.cpp" />
     <ClCompile Include="src\EditorContexts\AssetManagerContext.cpp" />
+    <ClCompile Include="src\EditorContexts\EditingContext.cpp" />
     <ClCompile Include="src\EditorContexts\Inspector.cpp" />
     <ClCompile Include="src\EditorContexts\LevelEditor.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\TransformComponentPanel.cpp" />
@@ -142,6 +144,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\EditorActions\LevelEditorEvents.h" />
     <ClInclude Include="src\EditorApplication.h" />
     <ClInclude Include="src\EditorContexts\AssetManagerContext.h" />
     <ClInclude Include="src\EditorContexts\EditingContext.h" />

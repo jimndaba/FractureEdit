@@ -32,7 +32,7 @@ void Fracture::LevelEditor::OnInit()
 	}
 
 	mCameraSystem = CameraSystem();
-
+	mTransformSystem = std::make_unique<TransformSystem>();
 
 }
 
@@ -45,13 +45,19 @@ void Fracture::LevelEditor::OnUpdate()
 	float frameTime = newTime - currentTime;
 	currentTime = newTime;
 
+
+
 	while (frameTime > 0.0)
 	{
 		float deltaTime = std::min(frameTime, dt);
-		//OnUpdate(deltaTime);
+		
 		
 		UpdateCamera(deltaTime);
 		
+		{
+			mTransformSystem->Update(mCurrenScene->RootEntity, glm::mat4(1.0));
+		}
+
 		
 		frameTime -= deltaTime;
 		t += deltaTime;
@@ -64,34 +70,36 @@ void Fracture::LevelEditor::OnUpdate()
 
 void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 {
-	if(IsEntitySelected)
+	if (mCurrenScene)
 	{
-		mOutlineRenderer->DrawOutline(SelectedEntity, EditorApplication::CurrentScene());
+		if (IsEntitySelected)
+		{
+			mOutlineRenderer->DrawOutline(SelectedEntity, mCurrenScene);
+		}
+
+		{
+			///const auto& camera = EditorApplication::CurrentScene()->GetCameraComponent(EditorApplication::CurrentScene()->ActiveCamera);
+			mSceneRenderer->Begin(mCurrenScene, mSceneView->ViewportCamera(), Device::GeometryContext());
+			mSceneRenderer->End(Device::GeometryContext());
+
+
+			Device::GeometryContext()->Begin();
+			Device::GeometryContext()->BindRenderTarget(0);
+			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+			Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
+
+			mGraph->Run(*EditorApplication::CurrentScene());
+
+			Device::GeometryContext()->BindRenderTarget(0);
+			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+
+			mOutlineRenderer->End();
+			mDebugRenderer->End(mSceneView->ViewportCamera());
+
+			Device::SubmitToGpu();
+		}
 	}
 
-	{
-		///const auto& camera = EditorApplication::CurrentScene()->GetCameraComponent(EditorApplication::CurrentScene()->ActiveCamera);
-		mSceneRenderer->Begin(EditorApplication::CurrentScene(), mSceneView->ViewportCamera(), Device::GeometryContext());
-		mSceneRenderer->End(Device::GeometryContext());
-
-
-		Device::GeometryContext()->Begin();
-		Device::GeometryContext()->BindRenderTarget(0);
-		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
-		Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
-
-		mGraph->Run(*EditorApplication::CurrentScene());
-
-		Device::GeometryContext()->BindRenderTarget(0);
-		Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
-
-		mOutlineRenderer->End();
-		mDebugRenderer->End(mSceneView->ViewportCamera());
-
-		Device::SubmitToGpu();
-	}
-
-	
 	//ImGui::Begin("DockSpace Demo", p_open);
 	ImGuiIO& io = ImGui::GetIO();
 	
@@ -128,16 +136,23 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 
 void Fracture::LevelEditor::RenderToolbar()
 {
-	ImVec2 button_size = { 16,16 };
+	ImVec2 button_size = {16,16 };
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 0,0 });
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4 , 4});
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 1));
+	ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
+	const auto& mSaveIcon = AssetManager::GetTextureByName("SaveIcon");
+	const auto& mOpenIcon = AssetManager::GetTextureByName("OpenIcon");
 
 	ImGui::Begin("##Toolbar");
 	ImGui::SameLine();
-	ImGui::Button("X", button_size);
+	if (ImGui::ImageButton((ImTextureID)mOpenIcon->RenderID, button_size, ImVec2 { 0, 1 }, ImVec2{ 1, 0 }))
+	{
+		EditorApplication::OpenScene();
+	}
 	ImGui::SameLine();
-	ImGui::Button("Y", button_size);
+	ImGui::ImageButton((ImTextureID)mSaveIcon->RenderID, button_size), ImVec2{ 0, 1 }, ImVec2{ 1, 0 };
 	ImGui::SameLine();
 	ImGui::Button("Z", button_size);
 	ImGui::SameLine();
@@ -145,6 +160,7 @@ void Fracture::LevelEditor::RenderToolbar()
 	ImGui::End();
 
 	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor();
 
 }
 
@@ -202,6 +218,12 @@ void Fracture::LevelEditor::UpdateCamera(float dt)
 
 	mSceneView->OnUpdate();
 
+}
+
+void Fracture::LevelEditor::OnSetScene(const std::shared_ptr<SetSceneForEditing>& evnt)
+{
+	mCurrenScene = &evnt->scene;
+	mTransformSystem->SetScene(&evnt->scene);
 }
 
 void Fracture::LevelEditor::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)

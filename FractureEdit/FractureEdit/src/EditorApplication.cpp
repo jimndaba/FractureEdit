@@ -8,15 +8,21 @@
 #include "core/CameraSystem.h"
 #include "core/TransformSystem.h"
 #include "input/Input.h"
+#include "imgui/ImGuizmo.h"
+#include "serialisation/SceneSerialiser.h"
+#include "Utils/FileDialogue.h"
+#include "EditorContexts/Panels/EngineOptionsPanels.h"
 
 bool Fracture::EditorApplication::opt_padding;
-
 std::unique_ptr<Fracture::RenderGraph> mGraph;
-
 std::unique_ptr<Fracture::Input> Fracture::EditorApplication::mInput;
-std::unique_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
+std::shared_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
 std::unique_ptr<Fracture::Eventbus> Fracture::EditorApplication::EventDispatcher;
+
+std::unique_ptr<Fracture::GameWindow> Fracture::EditorApplication::mWindow;
+
 int  Fracture::EditorApplication::mGuiID;
+
 
 Fracture::EditorApplication::EditorApplication()
 {
@@ -51,7 +57,6 @@ void Fracture::EditorApplication::Init()
 	}
 	{
 		mInput = std::make_unique<Input>(mWindow->Context());
-		//mInput->Init();
 	}
 
 	{
@@ -77,6 +82,32 @@ void Fracture::EditorApplication::Init()
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\OpenIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "OpenIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\SaveIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "SaveIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+
+
 
 	mGuiID = -1;
 
@@ -114,7 +145,10 @@ void Fracture::EditorApplication::Init()
 		mLevelEditor = std::make_unique<LevelEditor>();
 		mLevelEditor->OnInit();
 	}
-
+	{
+		mEngineOptions = std::make_unique<EngineOpitonsContext>();
+		mEngineOptions->OnInit();
+	}
 	mCurrentScene = std::make_unique<Scene>();
 	
 	{
@@ -139,9 +173,21 @@ void Fracture::EditorApplication::Init()
 		p.HasParent = true;
 		mCurrentScene->AddHierachyComponent(entity, p);
 	}
+	{
+		auto entity = mCurrentScene->AddEntity();
+		mCurrentScene->AddTagComponent(entity, "Pointlight");
+		mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+		mCurrentScene->AddPointlightComponent(entity);
+
+		HierachyParams p;
+		p.Parent = mCurrentScene->RootEntity;
+		p.HasParent = true;
+		mCurrentScene->AddHierachyComponent(entity, p);
+	}
 
 	mCurrentContext = mLevelEditor.get();
 
+	EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene));
 
 }
 
@@ -153,13 +199,15 @@ void Fracture::EditorApplication::Run()
 	{
 		OPTICK_FRAME("MainThread");
 		mWindow->PollEvents();
-
+		//mWindow->WaitEvents();
 		mGraphicsDevice->Begin();
-		
+
+
 		Update();	
 		Render();
 
 		mWindow->SwapBuffers();
+
 
 	}
 
@@ -168,23 +216,10 @@ void Fracture::EditorApplication::Run()
 
 void Fracture::EditorApplication::Update()
 {
-
-
-	
-	{
-		TransformSystem system = TransformSystem(*mCurrentScene.get());
-		system.Update(mCurrentScene->RootEntity, glm::mat4(1.0));
-	}
-
-
 	if (mCurrentContext)
 	{
 		mCurrentContext->OnUpdate();
 	}
-
-
-
-	
 }
 
 void Fracture::EditorApplication::Render()
@@ -193,7 +228,7 @@ void Fracture::EditorApplication::Render()
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	//ImGuizmo::BeginFrame();
+	ImGuizmo::BeginFrame();
 	mGuiID = -1;
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
@@ -227,11 +262,14 @@ void Fracture::EditorApplication::Render()
 
 		ImGui::PopStyleVar(2);
 
+		if (_ShowEditorOptions)
+		{
+			mEngineOptions->OnRender(&_ShowEditorOptions, mGraphicsDevice.get());
+		}
+
 
 		if (ImGui::BeginTabBar("Contexts"))
 		{
-			///Submit the DockSpace
-				
 			if (ImGui::BeginTabItem("Level Editor", &_ShowLevelEditor))
 			{
 				mCurrentContext = mLevelEditor.get();
@@ -241,10 +279,14 @@ void Fracture::EditorApplication::Render()
 			
 			if (ImGui::BeginTabItem("RenderGraph Editor", &_ShowGrapEditor))
 			{
-
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Audio Editor", &_ShowAudiEditor))
+			{
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Game", &_ShowAudiEditor))
 			{
 
 				ImGui::EndTabItem();
@@ -301,20 +343,37 @@ void Fracture::EditorApplication::DrawMenubar()
 			ImGui::MenuItem("Save");
 			ImGui::Separator();
 			ImGui::MenuItem("Close");
+			if (ImGui::MenuItem("OpenScene"))
+			{
+				
+			}
+			ImGui::Separator();
 			ImGui::Separator();
 			ImGui::MenuItem("Exit");
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Edit"))
 		{
+			ImGui::MenuItem("Undo");
+			ImGui::MenuItem("Redo");
+			ImGui::Separator();
+			ImGui::MenuItem("Cut");
+			ImGui::MenuItem("Copy");
+			ImGui::MenuItem("Paste");
+			ImGui::MenuItem("Duplicate");
+			ImGui::MenuItem("Delete");
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("Edit"))
+		if (ImGui::BeginMenu("View"))
 		{
+			ImGui::MenuItem("Options",nullptr, &_ShowEditorOptions);
 			ImGui::EndMenu();
-		}
+		}	
 		if (ImGui::BeginMenu("Help"))
 		{
+			ImGui::MenuItem("View Help");
+			ImGui::MenuItem("Getting Started");
+			ImGui::MenuItem("About Fracture");
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
@@ -440,4 +499,33 @@ Fracture::Scene* Fracture::EditorApplication::CurrentScene()
 int Fracture::EditorApplication::NextGuiID()
 {
 	return mGuiID += 1;
+}
+
+void Fracture::EditorApplication::OpenScene()
+{
+	FileDialogue oF;
+	auto path = oF.OpenFile(mWindow.get(), "Scene(*.scene)\0 * .scene\0All files(*.*)\0 * .*");
+	if (!path.empty())
+	{
+		SceneSerialiser serialiser(*mCurrentScene, IOMode::Open, SerialiseFormat::Json);
+		serialiser.Open(path);
+		auto scene = serialiser.ReadScene();
+		if (scene)
+		{
+			EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
+			mCurrentScene = scene;
+		}
+	}
+}
+
+void Fracture::EditorApplication::SaveProject()
+{
+}
+
+void Fracture::EditorApplication::LoadProject()
+{
+}
+
+void Fracture::EditorApplication::CloseProject()
+{
 }

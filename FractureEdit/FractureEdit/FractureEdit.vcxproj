@@ -98,7 +98,9 @@
     <ClCompile Include="src\EditorContexts\EditingContext.cpp" />
     <ClCompile Include="src\EditorContexts\Inspector.cpp" />
     <ClCompile Include="src\EditorContexts\LevelEditor.cpp" />
-    <ClCompile Include="src\EditorContexts\Panels\TransformComponentPanel.cpp" />
+    <ClCompile Include="src\EditorContexts\OptionsMenuPanel.cpp" />
+    <ClCompile Include="src\EditorContexts\Panels\EngineOptionsPanels.cpp" />
+    <ClCompile Include="src\EditorContexts\Panels\InspectorPanels.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\UIElement.cpp" />
     <ClCompile Include="src\EditorContexts\Scenegraph.cpp" />
     <ClCompile Include="src\EditorContexts\Viewport.cpp" />
@@ -150,7 +152,9 @@
     <ClInclude Include="src\EditorContexts\EditingContext.h" />
     <ClInclude Include="src\EditorContexts\Inspector.h" />
     <ClInclude Include="src\EditorContexts\LevelEditor.h" />
-    <ClInclude Include="src\EditorContexts\Panels\TransformComponentPanel.h" />
+    <ClInclude Include="src\EditorContexts\OptionsMenuPanel.h" />
+    <ClInclude Include="src\EditorContexts\Panels\EngineOptionsPanels.h" />
+    <ClInclude Include="src\EditorContexts\Panels\InspectorPanels.h" />
     <ClInclude Include="src\EditorContexts\Panels\UIElement.h" />
     <ClInclude Include="src\EditorContexts\Scenegraph.h" />
     <ClInclude Include="src\EditorContexts\Viewport.h" />

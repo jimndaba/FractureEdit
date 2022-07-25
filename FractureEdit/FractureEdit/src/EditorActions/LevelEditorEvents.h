@@ -6,6 +6,8 @@
 
 namespace Fracture
 {
+	class Scene;
+
 	struct SubmitEntityForEdit : public Event
 	{
 		SubmitEntityForEdit(const UUID& entity);
@@ -18,6 +20,13 @@ namespace Fracture
 		ReleaseEntityFromEdit(const UUID& entity);
 		bool Handled();
 		UUID Entity;
+	};
+
+	struct SetSceneForEditing : public Event
+	{
+		SetSceneForEditing(Scene& s);
+		bool Handled();
+		Scene& scene;
 	};
 }
 

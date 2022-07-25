@@ -63,7 +63,7 @@
     <ClCompile Include="src\EditorContexts\AssetManagerContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\EditorContexts\Panels\TransformComponentPanel.cpp">
+    <ClCompile Include="src\EditorContexts\Panels\InspectorPanels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\EditorContexts\Panels\UIElement.cpp">
@@ -76,6 +76,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\EditorContexts\EditingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EditorContexts\OptionsMenuPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EditorContexts\Panels\EngineOptionsPanels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,7 +140,7 @@
     <ClInclude Include="src\EditorContexts\AssetManagerContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\EditorContexts\Panels\TransformComponentPanel.h">
+    <ClInclude Include="src\EditorContexts\Panels\InspectorPanels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\EditorContexts\Panels\UIElement.h">
@@ -144,6 +150,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\EditorActions\LevelEditorEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EditorContexts\OptionsMenuPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EditorContexts\Panels\EngineOptionsPanels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

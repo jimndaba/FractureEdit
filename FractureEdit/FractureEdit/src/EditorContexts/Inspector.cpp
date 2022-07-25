@@ -1,6 +1,7 @@
 #include "EdPCH.h"
 #include "Inspector.h"
 #include "EditorApplication.h"
+#include "EditorContexts/Panels/InspectorPanels.h"
 
 Fracture::Inspector::Inspector():EditingContext()
 {
@@ -15,31 +16,37 @@ void Fracture::Inspector::OnUpdate()
 void Fracture::Inspector::OnRender(bool* p_open, Device* device)
 {
 	ImGui::Begin("Inspector");
-
-	if (mTranfomWidget)
+	for(const auto& element : mElements)
 	{
-		mTranfomWidget->OnRender(p_open);
+		element->OnRender(p_open);
 	}
-
 	ImGui::End();
 }
 
 void Fracture::Inspector::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)
-{
-	if (mTranfomWidget)
+{	
+	if (EditorApplication::CurrentScene()->HasTagComponent(evnt->Entity))
 	{
-		mTranfomWidget.reset();
+		mElements.push_back(std::make_shared<TagComponentPanel>(EditorApplication::CurrentScene()->GetTagComponent(evnt->Entity)));
 	}
+
 	if (EditorApplication::CurrentScene()->HasTransformComponent(evnt->Entity))
 	{
-		mTranfomWidget = std::make_unique<TransfromComponentPanel>(EditorApplication::CurrentScene()->GetTransformComponent(evnt->Entity));
+		mElements.push_back(std::make_shared<TransfromComponentPanel>(EditorApplication::CurrentScene()->GetTransformComponent(evnt->Entity)));
 	}	
+
+	if (EditorApplication::CurrentScene()->HasCameraComponent(evnt->Entity))
+	{
+		mElements.push_back(std::make_shared<CameraComonentPanel>(EditorApplication::CurrentScene()->GetCameraComponent(evnt->Entity)));
+	}
+
+	if (EditorApplication::CurrentScene()->HasPointlightComponent(evnt->Entity))
+	{
+		mElements.push_back(std::make_shared<PointlightPanel>(EditorApplication::CurrentScene()->GetPointlightComponent(evnt->Entity)));
+	}
 }
 
 void Fracture::Inspector::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt)
 {
-	if (mTranfomWidget)
-	{
-		mTranfomWidget.reset();
-	}
+	mElements.clear();
 }

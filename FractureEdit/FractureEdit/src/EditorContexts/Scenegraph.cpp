@@ -18,7 +18,7 @@ void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 	ImGui::BeginTable("SceneGraphHeader",1, flags);
 
 	ImGuiTableColumnFlags columnFlags = ImGuiTableColumnFlags_WidthFixed;
-	ImGui::TableSetupColumn("Entity", columnFlags, 200);
+	ImGui::TableSetupColumn("Scene", columnFlags, 200);
 
 	ImGui::TableHeadersRow();
 	ImGui::TableNextRow();
@@ -32,8 +32,7 @@ void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 
 	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered() && !ImGui::GetIO().KeyShift)
 	{
-		EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(Selection));
-		Selection = UUID();
+		ClearSelection();
 	}
 
 	ImGui::End();
@@ -61,6 +60,7 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 		bool opened = ImGui::TreeNodeEx(std::to_string((uint32_t)entity).c_str(), flags, tag->Name.c_str());
 		if (ImGui::IsItemClicked())
 		{
+			ClearSelection();
 			EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
 			Selection = entity;
 		}
@@ -75,4 +75,15 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 			ImGui::TreePop();
 		}
 	}
+}
+
+void Fracture::ScenegraphView::ClearSelection()
+{
+	EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(Selection));
+	Selection = UUID();
+}
+
+void Fracture::ScenegraphView::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt)
+{
+	Selection = UUID();
 }

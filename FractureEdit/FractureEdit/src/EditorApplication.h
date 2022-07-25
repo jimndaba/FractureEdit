@@ -10,24 +10,24 @@
 #include "rendering/DebugRenderer.h"
 #include "input/Input.h"
 #include "events/Eventbus.h"
+#include "EditorContexts/OptionsMenuPanel.h"
 
 namespace Fracture
 {
 
 	class EditorApplication
 	{
-
-		std::unique_ptr<GameWindow> mWindow;
+		static std::unique_ptr<GameWindow> mWindow;
 		std::unique_ptr<Device> mGraphicsDevice;
 		std::unique_ptr<LevelEditor> mLevelEditor;
 		std::unique_ptr<AssetManager> Assets;
+		std::unique_ptr<EngineOpitonsContext> mEngineOptions;
+
+
 		static std::unique_ptr<Eventbus> EventDispatcher;
-		static std::unique_ptr<Input> mInput;
-
-		
-		static std::unique_ptr<Scene> mCurrentScene;
+		static std::unique_ptr<Input> mInput;		
+		static std::shared_ptr<Scene> mCurrentScene;
 		bool IsRunning = true;
-
 		static bool opt_padding;
 
 	public:
@@ -43,8 +43,13 @@ namespace Fracture
 		void GuiStyle();
 		static Eventbus* Dispatcher();
 		static Scene* CurrentScene();
-
 		static int NextGuiID();
+
+		static void OpenScene();
+
+		void SaveProject();
+		void LoadProject();
+		void CloseProject();
 
 
 	private:
@@ -52,8 +57,9 @@ namespace Fracture
 		bool _ShowLevelEditor = true;
 		bool _ShowGrapEditor = true;
 		bool _ShowAudiEditor = true;
+		bool _ShowEditorOptions = false;
 
-		EditingContext* mCurrentContext;
+		EditingContext* mCurrentContext = nullptr;
 		static int mGuiID;
 	};
 

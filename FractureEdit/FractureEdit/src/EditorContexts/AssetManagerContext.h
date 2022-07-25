@@ -14,8 +14,6 @@ namespace Fracture
 		AssetManagerContext();
 		void OnUpdate();
 		void OnRender(bool* p_open,Device* device);
-
-
 	};
 }
 

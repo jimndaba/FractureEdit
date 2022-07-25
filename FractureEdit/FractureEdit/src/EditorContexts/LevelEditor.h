@@ -10,6 +10,7 @@
 #include "EditingContext.h"
 
 #include "core/CameraSystem.h"
+#include "core/TransformSystem.h"
 
 #include "rendering/OutlineRenderer.h"
 #include "rendering/SceneRenderer.h"
@@ -29,6 +30,8 @@ namespace Fracture
 		glm::vec2 m_InitialMousePosition = glm::vec2(0.0f);
 		glm::vec2 mouse_delta = glm::vec2(0.0f);
 		CameraSystem mCameraSystem;
+		std::unique_ptr<TransformSystem> mTransformSystem;
+		Scene* mCurrenScene;
 
 	public:
 		LevelEditor();
@@ -39,6 +42,7 @@ namespace Fracture
 
 		void UpdateCamera(float dt);
 
+		void OnSetScene(const std::shared_ptr<SetSceneForEditing>& evnt);
 		void OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt);
 		void OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt);
 

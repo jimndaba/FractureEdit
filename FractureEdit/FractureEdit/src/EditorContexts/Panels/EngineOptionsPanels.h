@@ -7,6 +7,14 @@
 namespace Fracture
 {
 	struct CameraComponent;
+	struct FractureProject;
+
+	struct ProjectOptions : public UIElement
+	{
+		ProjectOptions(FractureProject* p);
+		void OnRender(bool* p_open);
+		FractureProject* project;
+	};
 
 	struct CameraOptions : public UIElement
 	{

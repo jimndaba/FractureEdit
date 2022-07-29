@@ -7,11 +7,12 @@
 namespace Fracture
 {
 	struct CameraOptions;
+	struct ProjectOptions;
 
 	class EngineOpitonsContext : public EditingContext
 	{
 		std::shared_ptr<CameraOptions> mCameraOptions;
-
+		std::shared_ptr<ProjectOptions> mProjectOptions;
 	public:
 		EngineOpitonsContext();
 		void OnInit();

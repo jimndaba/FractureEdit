@@ -12,14 +12,20 @@
 #include "serialisation/SceneSerialiser.h"
 #include "Utils/FileDialogue.h"
 #include "EditorContexts/Panels/EngineOptionsPanels.h"
+#include "Utils/WindowsUtils.h"
+#include <ShlObj_core.h>
+#include "assets/MeshLoader.h"
+
+#pragma comment(lib, "shell32.lib")
 
 bool Fracture::EditorApplication::opt_padding;
 std::unique_ptr<Fracture::RenderGraph> mGraph;
 std::unique_ptr<Fracture::Input> Fracture::EditorApplication::mInput;
 std::shared_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
 std::unique_ptr<Fracture::Eventbus> Fracture::EditorApplication::EventDispatcher;
-
+std::unique_ptr<Fracture::AssetManager> Fracture::EditorApplication::Assets;
 std::unique_ptr<Fracture::GameWindow> Fracture::EditorApplication::mWindow;
+std::unique_ptr<Fracture::FractureProject>  Fracture::EditorApplication::mProject;
 
 int  Fracture::EditorApplication::mGuiID;
 
@@ -106,8 +112,90 @@ void Fracture::EditorApplication::Init()
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\PlayIcon.png";
 
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "PlayIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\PauseIcon.png";
 
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "PauseIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\RotateIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "RotateIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\MoveIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "MoveIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\ScaleIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "ScaleIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\SelectIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "SelectIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\EntityIcon.png";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+		texture->Name = "EntityIcon";
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
 
 	mGuiID = -1;
 
@@ -144,50 +232,19 @@ void Fracture::EditorApplication::Init()
 	{
 		mLevelEditor = std::make_unique<LevelEditor>();
 		mLevelEditor->OnInit();
+
+		mPlayIcon = AssetManager::GetTextureByName("PlayIcon");
+		mPauseIcon = AssetManager::GetTextureByName("PauseIcon");
+
 	}
 	{
 		mEngineOptions = std::make_unique<EngineOpitonsContext>();
 		mEngineOptions->OnInit();
 	}
-	mCurrentScene = std::make_unique<Scene>();
-	
-	{
-		auto camera = mCurrentScene->AddEntity();
-		mCurrentScene->AddTagComponent(camera, "Camera");
-		mCurrentScene->AddTransformComponent(camera);
-		mCurrentScene->AddCameraComponent(camera);
-		HierachyParams p;
-		p.Parent = mCurrentScene->RootEntity;
-		p.HasParent = true;
-		mCurrentScene->AddHierachyComponent(camera, p);
-		mCurrentScene->ActiveCamera = camera;
-	}
-	{
-		auto entity = mCurrentScene->AddEntity();
-		mCurrentScene->AddTagComponent(entity, "Suzanne");
-		mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
-		mCurrentScene->AddStaticMeshComponent(entity, "Suzanne", Assets->GetStaticMesh("Suzanne"));
-
-		HierachyParams p;
-		p.Parent = mCurrentScene->RootEntity;
-		p.HasParent = true;
-		mCurrentScene->AddHierachyComponent(entity, p);
-	}
-	{
-		auto entity = mCurrentScene->AddEntity();
-		mCurrentScene->AddTagComponent(entity, "Pointlight");
-		mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
-		mCurrentScene->AddPointlightComponent(entity);
-
-		HierachyParams p;
-		p.Parent = mCurrentScene->RootEntity;
-		p.HasParent = true;
-		mCurrentScene->AddHierachyComponent(entity, p);
-	}
 
 	mCurrentContext = mLevelEditor.get();
 
-	EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene));
+	EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene));
 
 }
 
@@ -199,16 +256,12 @@ void Fracture::EditorApplication::Run()
 	{
 		OPTICK_FRAME("MainThread");
 		mWindow->PollEvents();
-		//mWindow->WaitEvents();
 		mGraphicsDevice->Begin();
-
 
 		Update();	
 		Render();
 
 		mWindow->SwapBuffers();
-
-
 	}
 
 	Shutdown();
@@ -294,10 +347,20 @@ void Fracture::EditorApplication::Render()
 			ImGui::EndTabBar();
 		}
 
+		ImVec2 button_size = {10,10 };
 		ImGui::SameLine(ImGui::GetContentRegionMax().x * 0.5f);
-		ImGui::Button("Play");
+		//ImGui::Button("Play");
+		//ImGui::SameLine();
+		//ImGui::Button("Pause");
+		if (ImGui::ImageButton((ImTextureID)mPlayIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+		{
+		
+		}
 		ImGui::SameLine();
-		ImGui::Button("Pause");
+		if (ImGui::ImageButton((ImTextureID)mPauseIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+		{
+
+		}
 
 
 		ImGui::End();
@@ -337,17 +400,49 @@ void Fracture::EditorApplication::DrawMenubar()
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			ImGui::MenuItem("New");
-			ImGui::MenuItem("Open");
-			ImGui::Separator();
-			ImGui::MenuItem("Save");
-			ImGui::Separator();
-			ImGui::MenuItem("Close");
-			if (ImGui::MenuItem("OpenScene"))
+			if(ImGui::MenuItem("New Project"))
 			{
-				
-			}
+				FileDialogue fd;
+				auto directory = fd.SelectDirectory();
+
+				if (!directory.empty())
+				{
+					ProjectParams p;
+					p.Name = "Untitled";
+					p.path = directory;
+					NewProject(p);
+				}
+			};
+			if (ImGui::MenuItem("Open Project"))
+			{
+				//steps to loading Project.
+
+				//1 - load directory paths and file paths.
+				//2 - register all assets
+				//3 - load scene and assets for scene.
+
+
+			};
 			ImGui::Separator();
+			if (ImGui::MenuItem("Save Project"))
+			{
+				SaveProject();
+			};
+			ImGui::Separator();
+			ImGui::MenuItem("Close Project");
+			ImGui::Separator();
+			if (ImGui::MenuItem("New Scene"))
+			{
+				NewScene();
+			}
+			if (ImGui::MenuItem("Open Scene"))
+			{
+				OpenScene();
+			}
+			if (ImGui::MenuItem("Save Scene"))
+			{
+				SaveScene();
+			}			
 			ImGui::Separator();
 			ImGui::MenuItem("Exit");
 			ImGui::EndMenu();
@@ -364,9 +459,192 @@ void Fracture::EditorApplication::DrawMenubar()
 			ImGui::MenuItem("Delete");
 			ImGui::EndMenu();
 		}
+		if (mCurrentScene)
+		{
+			if (ImGui::BeginMenu("Scene"))
+			{
+				if (ImGui::BeginMenu("Add"))
+				{
+					if (ImGui::MenuItem("Cube"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Cube");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Cube", Assets->GetStaticMesh("Cube"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Cylinder"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Cylinder");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Cylinder", Assets->GetStaticMesh("Cylinder"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+
+					}
+					if (ImGui::MenuItem("Suzanne"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Suzanne");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Suzanne", Assets->GetStaticMesh("Suzanne"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Torus"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Torus");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Torus", Assets->GetStaticMesh("Torus"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Sphere"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Sphere");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Sphere", Assets->GetStaticMesh("Sphere"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Cone"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Cone");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Cone", Assets->GetStaticMesh("Cone"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Plane"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Plane");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Plane", Assets->GetStaticMesh("Plane"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Pointlight"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Pointlight");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddPointlightComponent(entity);
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
+					if (ImGui::MenuItem("Model"))
+					{
+
+						FileDialogue oF;
+						auto path = oF.OpenFile(mWindow.get(), "fbx(*.fbx)\0 * .fbx\0obj(*.obj)\0 * .obj\0blender(*.blend)\0 * .blend\0glTF(*.gltf)\0 * .gltf\0All files(*.*)\0 * .*");
+						if (!path.empty())
+						{
+
+							std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
+							std::string::size_type const p(base_filename.find_last_of('.'));
+							std::string file_without_extension = base_filename.substr(0, p);
+
+							Assets->AddStaticMesh(file_without_extension.c_str(), path.c_str());
+
+
+							MeshRegistry reg;
+							reg.ID = UUID();
+							reg.Name = file_without_extension.c_str();
+							reg.Path = path.c_str();
+							reg.MeshType = MeshRegistry::Type::Static;
+							Assets->RegisterMesh(reg);
+
+
+							auto entity = mCurrentScene->AddEntity();
+							mCurrentScene->AddTagComponent(entity, file_without_extension);
+							mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+							mCurrentScene->AddStaticMeshComponent(entity, file_without_extension, Assets->GetStaticMesh(file_without_extension.c_str()));
+
+							HierachyParams c;
+							c.Parent = mCurrentScene->RootEntity;
+							c.HasParent = true;
+							mCurrentScene->AddHierachyComponent(entity, c);
+
+							Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+						}
+
+
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenu();
+			}
+		}
 		if (ImGui::BeginMenu("View"))
 		{
 			ImGui::MenuItem("Options",nullptr, &_ShowEditorOptions);
+			if(ImGui::MenuItem("Take Screenshot"))
+			{
+				const auto& texture = mGraphicsDevice->GeometryContext()->PostProcessReadTarget()->ColorAttachments[0];
+
+				int width = texture->Description.Width;
+				int height = texture->Description.Height;
+				GLsizei nrChannels = 3;
+				GLsizei stride = nrChannels * width;
+				stride += (stride % 4) ? (4 - stride % 4) : 0;
+				GLsizei bufferSize = stride * height;
+				std::vector<char> buffer(bufferSize);
+
+
+				if (mProject->EditorScreenshotFolderPath.empty())
+				{
+					PWSTR mypicturespath{};
+					HRESULT result = SHGetKnownFolderPath(FOLDERID_Pictures, 0, NULL, &mypicturespath);
+					std::wstring ws(mypicturespath);
+					mProject->EditorScreenshotFolderPath = std::string(ws.begin(), ws.end());
+				}
+
+				glPixelStorei(GL_PACK_ALIGNMENT, 4);
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, mGraphicsDevice->GeometryContext()->PostProcessReadTarget()->RenderID);
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+				glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
+				TextureLoader::SaveImage(mProject->EditorScreenshotFolderPath +"\\fracture_" +  std::to_string(glfwGetTime()) + ".png", width, height, nrChannels, buffer, stride);
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+			}
+
 			ImGui::EndMenu();
 		}	
 		if (ImGui::BeginMenu("Help"))
@@ -501,6 +779,43 @@ int Fracture::EditorApplication::NextGuiID()
 	return mGuiID += 1;
 }
 
+void Fracture::EditorApplication::NewScene()
+{
+	if (mProject)
+	{
+		if (mCurrentScene)
+		{
+			mCurrentScene.reset();
+		}
+
+		mCurrentScene = std::make_unique<Scene>();
+		{
+			auto camera = mCurrentScene->AddEntity();
+			mCurrentScene->AddTagComponent(camera, "Camera");
+			mCurrentScene->AddTransformComponent(camera);
+			mCurrentScene->AddCameraComponent(camera);
+			HierachyParams p;
+			p.Parent = mCurrentScene->RootEntity;
+			p.HasParent = true;
+			mCurrentScene->AddHierachyComponent(camera, p);
+			mCurrentScene->ActiveCamera = camera;
+		}		
+		EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene.get()));
+	}
+}
+
+void Fracture::EditorApplication::SaveScene()
+{
+	FileDialogue saveFile;
+	auto path = saveFile.SaveFile(mWindow.get(), "Scene (*.scene)\0");
+	if (!path.empty())
+	{
+		SceneSerialiser serialiser(*mCurrentScene, IOMode::Save, SerialiseFormat::Json);
+		serialiser.WriteScene();
+		serialiser.Save(path + ".scene");
+	}
+}
+
 void Fracture::EditorApplication::OpenScene()
 {
 	FileDialogue oF;
@@ -518,8 +833,81 @@ void Fracture::EditorApplication::OpenScene()
 	}
 }
 
+void Fracture::EditorApplication::NewProject(const ProjectParams& p)
+{
+	if (!p.path.empty())
+	{
+		int root = _mkdir((p.path + "\\" + p.Name).c_str());
+		int bin = _mkdir((p.path + "\\" + p.Name + "\\bin").c_str());
+		int src = _mkdir((p.path + "\\" + p.Name + "\\src").c_str());
+		int vendor = _mkdir((p.path + "\\" + p.Name + "\\vendor").c_str());
+		int intmids = _mkdir((p.path + "\\" + p.Name + "\\int").c_str());
+
+		std::string contentDir = p.path + "\\" + p.Name + "\\bin\\content";
+		int check = _mkdir(contentDir.c_str());
+		//FRACTURE_INFO("Creating Content Dir: {}", p.path + "\\" + p.Name + "\\bin\\content");
+
+		if (check == 0)
+		{
+			int models = _mkdir((contentDir + "\\meshes").c_str());
+			int scenes = _mkdir((contentDir + "\\scenes").c_str());
+			int rendergraphs = _mkdir((contentDir + "\\rendergraphs").c_str());
+			int shaders = _mkdir((contentDir + "\\shaders").c_str());
+			int textures = _mkdir((contentDir + "\\textures").c_str());
+			int fonts = _mkdir((contentDir + "\\fonts").c_str());
+			int scripts = _mkdir((contentDir + "\\scripts").c_str());
+			int materials = _mkdir((contentDir + "\\materials").c_str());
+
+
+			if (mProject)
+			{
+				CloseProject();
+				mProject.reset();
+			}
+
+			mProject = std::make_unique<FractureProject>();
+			mProject->ID = UUID();
+			mProject->Directory = p.path+ "\\" + p.Name;
+			mProject->ContentDirectory = contentDir;
+			mProject->AssetsFileDirectory = contentDir + "\\Assets.frRes";
+			mProject->Name = p.Name;
+			mWindow->SetTitle("Fracture Engine: " + mProject->Name);
+			
+			auto scene = std::make_shared<Scene>();
+			{
+				auto camera = scene->AddEntity();
+				scene->AddTagComponent(camera, "Camera");
+				scene->AddTransformComponent(camera);
+				scene->AddCameraComponent(camera);
+				HierachyParams p;
+				p.Parent = scene->RootEntity;
+				p.HasParent = true;
+				scene->AddHierachyComponent(camera, p);
+				scene->ActiveCamera = camera;
+			}		
+			EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*scene.get()));
+			mCurrentScene = scene;
+			SaveProject();			
+		}
+	}
+}
+
 void Fracture::EditorApplication::SaveProject()
 {
+	if (mProject)
+	{
+		Serialiser s(IOMode::Save, SerialiseFormat::Json);
+		s.BeginStruct("FractureProject");
+		s.Property("Directory", mProject->Directory);
+		s.Property("Name", mProject->Name);
+		s.Property("ContentDirectory", mProject->ContentDirectory);
+		s.Property("ActiveScenePath", mProject->ActiveScenePath);
+		s.Property("AssetFileDirectory", mProject->AssetsFileDirectory);
+		s.EndStruct();
+		s.Save(mProject->Directory + mProject->Name + ".FractureProject");
+		Assets->SaveAssetRegister(mProject->ContentDirectory);
+		_IsProjectDirty = false;
+	}
 }
 
 void Fracture::EditorApplication::LoadProject()
@@ -528,4 +916,9 @@ void Fracture::EditorApplication::LoadProject()
 
 void Fracture::EditorApplication::CloseProject()
 {
+}
+
+Fracture::FractureProject* Fracture::EditorApplication::CurrentProject()
+{
+	return mProject.get();
 }

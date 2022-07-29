@@ -32,7 +32,16 @@ namespace Fracture
 		bool IsFocused();
 		bool IsHovered();
 
+		bool IsOnGizomModeButtons();
+
 	private:
+		bool clearselection = false;
+		bool IsOverButton = false;
+		bool IsSelectMode = false;
+		Texture* mRotateIcon;
+		Texture* mScaleIcon;
+		Texture* mMoveIcon;
+		Texture* mSelectIcon;
 		static std::unique_ptr<CameraComponent> mViewportCamera;
 		std::vector<SelectionContext> m_SelectionContext;
 		glm::vec2 m_ViewportSize;

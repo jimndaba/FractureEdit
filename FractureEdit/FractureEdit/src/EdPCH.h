@@ -30,6 +30,7 @@
 #include <typeindex>
 #include <filesystem>
 #include <Windows.h>
+#include <direct.h>
 
 
 #define GLFW_INCLUDE_NONE

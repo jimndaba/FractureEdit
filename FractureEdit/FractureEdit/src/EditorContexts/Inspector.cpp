@@ -37,12 +37,18 @@ void Fracture::Inspector::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEnti
 
 	if (EditorApplication::CurrentScene()->HasCameraComponent(evnt->Entity))
 	{
-		mElements.push_back(std::make_shared<CameraComonentPanel>(EditorApplication::CurrentScene()->GetCameraComponent(evnt->Entity)));
+		mElements.push_back(std::make_shared<CameraComponentPanel>(EditorApplication::CurrentScene()->GetCameraComponent(evnt->Entity)));
 	}
 
 	if (EditorApplication::CurrentScene()->HasPointlightComponent(evnt->Entity))
 	{
 		mElements.push_back(std::make_shared<PointlightPanel>(EditorApplication::CurrentScene()->GetPointlightComponent(evnt->Entity)));
+	}
+
+
+	if (EditorApplication::CurrentScene()->HasStaticMeshComponent(evnt->Entity))
+	{
+		mElements.push_back(std::make_shared<StaticMeshComponentPanel>(EditorApplication::CurrentScene()->GetStaticMeshComponent(evnt->Entity)));
 	}
 }
 

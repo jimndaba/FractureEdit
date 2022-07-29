@@ -16,6 +16,9 @@ namespace Fracture
 		
 		std::string ActiveScene;
 		std::string ActiveRendergraph;
+		std::string ActiveScenePath;
+
+		std::string EditorScreenshotFolderPath;
 
 
 		UUID ActiveGraphID;

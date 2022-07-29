@@ -4,6 +4,7 @@
 
 Fracture::ScenegraphView::ScenegraphView():EditingContext()
 {
+	mEntityIcon = AssetManager::GetTextureByName("EntityIcon");
 }
 
 void Fracture::ScenegraphView::OnUpdate()
@@ -56,7 +57,14 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 			flags |= ImGuiTreeNodeFlags_Leaf;
 		}
 
+
 		ImGui::TableNextColumn();
+
+
+		ImGui::Image((ImTextureID)mEntityIcon->RenderID, ImVec2 {8, 8 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+		ImGui::SameLine();
+
+
 		bool opened = ImGui::TreeNodeEx(std::to_string((uint32_t)entity).c_str(), flags, tag->Name.c_str());
 		if (ImGui::IsItemClicked())
 		{

@@ -34,38 +34,36 @@ void Fracture::LevelEditor::OnInit()
 	mCameraSystem = CameraSystem();
 	mTransformSystem = std::make_unique<TransformSystem>();
 
+	mSaveIcon = AssetManager::GetTextureByName("SaveIcon");
+	mOpenIcon = AssetManager::GetTextureByName("OpenIcon");
+
 }
 
 void Fracture::LevelEditor::OnUpdate()
 {
-	mOutlineRenderer->Begin();
-	mDebugRenderer->Begin();
-
-	float newTime = (float)glfwGetTime();
-	float frameTime = newTime - currentTime;
-	currentTime = newTime;
-
-
-
-	while (frameTime > 0.0)
+	if (mCurrenScene)
 	{
-		float deltaTime = std::min(frameTime, dt);
-		
-		
-		UpdateCamera(deltaTime);
-		
+		mOutlineRenderer->Begin();
+		mDebugRenderer->Begin();
+
+		float newTime = (float)glfwGetTime();
+		float frameTime = newTime - currentTime;
+		currentTime = newTime;
+
+
+
+		while (frameTime > 0.0)
 		{
-			mTransformSystem->Update(mCurrenScene->RootEntity, glm::mat4(1.0));
+			float deltaTime = std::min(frameTime, dt);
+			{
+				UpdateCamera(deltaTime);
+			}
+
+			frameTime -= deltaTime;
+			t += deltaTime;
 		}
-
-		
-		frameTime -= deltaTime;
-		t += deltaTime;
+		mTransformSystem->Update(mCurrenScene->RootEntity, glm::mat4(1.0));
 	}
-
-
-
-
 }
 
 void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
@@ -88,7 +86,7 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
 			Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
 
-			mGraph->Run(*EditorApplication::CurrentScene());
+			mGraph->Run(*EditorApplication::CurrentScene(), mSceneView->ViewportCamera());
 
 			Device::GeometryContext()->BindRenderTarget(0);
 			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
@@ -98,52 +96,51 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 
 			Device::SubmitToGpu();
 		}
-	}
-
-	//ImGui::Begin("DockSpace Demo", p_open);
-	ImGuiIO& io = ImGui::GetIO();
-	
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-	{
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id);
-	}
 
 
+		//ImGui::Begin("DockSpace Demo", p_open);
+		ImGuiIO& io = ImGui::GetIO();
+
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id);
+		}
 
 
-	RenderToolbar();
 
-	if (_ShowScenegraph)
-	{
-		mSceneGraph->OnRender(&_ShowScenegraph,device);
+
+		RenderToolbar();
+
+		if (_ShowScenegraph)
+		{
+			mSceneGraph->OnRender(&_ShowScenegraph, device);
+		}
+		if (_ShowInspector)
+		{
+			mInspector->OnRender(&_ShowInspector, device);
+		}
+		if (_ShowViewport)
+		{
+			mSceneView->OnRender(&_ShowViewport, device);
+		}
+		if (_ShowAssetManager)
+		{
+			mAssets->OnRender(&_ShowAssetManager, device);
+		}
 	}
-	if (_ShowInspector)
-	{
-		mInspector->OnRender(&_ShowInspector,device);
-	}
-	if (_ShowViewport)
-	{
-		mSceneView->OnRender(&_ShowViewport,device);
-	}
-	if (_ShowAssetManager)
-	{
-		mAssets->OnRender(&_ShowAssetManager,device);
-	}
-		
 
 }
 
 void Fracture::LevelEditor::RenderToolbar()
 {
-	ImVec2 button_size = {16,16 };
+	ImVec2 button_size = {10,10 };
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4 , 4});
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 1));
 	ImGui::PushStyleColor(ImGuiCol_Button,ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 
-	const auto& mSaveIcon = AssetManager::GetTextureByName("SaveIcon");
-	const auto& mOpenIcon = AssetManager::GetTextureByName("OpenIcon");
+
 
 	ImGui::Begin("##Toolbar");
 	ImGui::SameLine();
@@ -152,7 +149,10 @@ void Fracture::LevelEditor::RenderToolbar()
 		EditorApplication::OpenScene();
 	}
 	ImGui::SameLine();
-	ImGui::ImageButton((ImTextureID)mSaveIcon->RenderID, button_size), ImVec2{ 0, 1 }, ImVec2{ 1, 0 };
+	if (ImGui::ImageButton((ImTextureID)mSaveIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+	{
+		EditorApplication::SaveScene();
+	}
 	ImGui::SameLine();
 	ImGui::Button("Z", button_size);
 	ImGui::SameLine();

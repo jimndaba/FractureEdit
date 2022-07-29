@@ -32,6 +32,8 @@ namespace Fracture
 		CameraSystem mCameraSystem;
 		std::unique_ptr<TransformSystem> mTransformSystem;
 		Scene* mCurrenScene;
+		Texture* mSaveIcon;
+		Texture* mOpenIcon;
 
 	public:
 		LevelEditor();

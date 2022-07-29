@@ -21,6 +21,7 @@ namespace Fracture
 
 	private:
 		UUID Selection;
+		Texture* mEntityIcon;
 
 	};
 }

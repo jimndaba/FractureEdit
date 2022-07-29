@@ -35,11 +35,18 @@ namespace Fracture
 		PointlightComponent* component;
 	};
 
-	struct CameraComonentPanel : public UIElement
+	struct CameraComponentPanel : public UIElement
 	{
-		CameraComonentPanel(CameraComponent* light);
+		CameraComponentPanel(CameraComponent* light);
 		void OnRender(bool* p_open);
 		CameraComponent* component;
+	};
+
+	struct StaticMeshComponentPanel : public UIElement
+	{
+		StaticMeshComponentPanel(StaticMeshComponent* mesh);
+		void OnRender(bool* p_open);
+		StaticMeshComponent* component;
 	};
 
 

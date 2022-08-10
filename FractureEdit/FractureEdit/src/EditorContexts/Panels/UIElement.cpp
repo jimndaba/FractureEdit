@@ -3,6 +3,14 @@
 #include <imgui/imgui_internal.h>
 #include "EditorApplication.h"
 
+void Fracture::UIElement::OnAttach()
+{
+}
+
+void Fracture::UIElement::OnDettach()
+{
+}
+
 void Fracture::UIElement::BeginProps(int columns)
 {
 	ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersH;
@@ -14,6 +22,111 @@ void Fracture::UIElement::BeginProps(int columns)
 void Fracture::UIElement::EndProps()
 {
 	ImGui::EndTable();
+}
+
+bool Fracture::UIElement::PropertyImgEx(const std::string& label, const uint32_t image, glm::vec3& value,float ButtonSize)
+{
+	bool dirty = false;
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
+	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+
+	ImGui::PushID(EditorApplication::NextGuiID());
+
+	ImGui::TableNextColumn();
+
+	ImGui::Text(label.c_str());
+
+	ImGui::TableNextColumn();
+	{
+		if (ImGui::ImageButton((ImTextureID)image, ImVec2(64, 64), ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+		{
+			dirty = true;
+		}
+	}
+	ImGui::SameLine();
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 0,0 });
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f,0.30f,0.30f,1.0f });
+		if (ImGui::Button("-", buttonSize))
+		{
+			value = glm::vec3(1.0f);
+			dirty = true;
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+		ImGui::SameLine();
+		ImGui::PushItemWidth(-5);
+		float col[3] = { value.x,value.y,value.z };
+
+		ImGui::PushItemWidth(32);
+		ImGuiColorEditFlags flag = ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoSidePreview;
+		if (ImGui::ColorPicker3("##color", col, flag))
+		{
+			value = glm::vec3(col[0], col[1], col[2]);
+			dirty = true;
+		}
+		ImGui::PopItemWidth();
+	}
+	ImGui::PopID();
+	return dirty;
+}
+
+bool Fracture::UIElement::PropertyImgEx(const std::string& label, const uint32_t image, float& value, float ButtonSize)
+{
+	bool dirty = false;
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
+	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+
+	ImGui::PushID(EditorApplication::NextGuiID());
+
+	ImGui::TableNextColumn();
+
+	ImGui::Text(label.c_str());
+
+	ImGui::TableNextColumn();
+	{
+		if (ImGui::ImageButton((ImTextureID)image, ImVec2(64, 64), ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+		{
+			dirty = true;
+		}
+	}
+	ImGui::SameLine();
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 0,0 });
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f,0.30f,0.30f,1.0f });
+		if (ImGui::Button("-", buttonSize))
+		{
+			value = 0.0f;
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+		ImGui::SameLine();
+		ImGui::PushItemWidth(-5);
+		ImGui::DragFloat("##value", &value, 0.01f, -10000.0f, 10000.0f, "%.2f");
+	}
+	ImGui::PopID();
+	return dirty;
+}
+
+bool Fracture::UIElement::PropertyImgEx(const std::string& label, const uint32_t image, int ButtonSize)
+{
+	bool dirty = false;
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
+	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+
+	ImGui::PushID(EditorApplication::NextGuiID());
+
+	ImGui::TableNextColumn();
+
+	ImGui::Text(label.c_str());
+
+	ImGui::TableNextColumn();
+	if (ImGui::ImageButton((ImTextureID)image, ImVec2(ButtonSize, ButtonSize), ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+	{
+		dirty = true;
+	}	
+	ImGui::PopID();
+	return dirty;
 }
 
 bool Fracture::UIElement::PropertyEx(const std::string& label, std::string& outString, float columnWidth)
@@ -87,6 +200,35 @@ bool Fracture::UIElement::Property(const std::string& label, float& value, float
 		ImGui::PushItemWidth(-5);
 		ImGui::DragFloat("##value", &value, 0.01f, -10000.0f, 10000.0f, "%.2f");
 	}	
+	ImGui::PopID();
+	return false;
+}
+
+bool Fracture::UIElement::Property(const std::string& label, int& value, float reset_value)
+{
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
+	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+
+	ImGui::PushID(EditorApplication::NextGuiID());
+
+	ImGui::TableNextColumn();
+
+	ImGui::Text(label.c_str());
+
+	ImGui::TableNextColumn();
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 0,0 });
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f,0.30f,0.30f,1.0f });
+		if (ImGui::Button("-", buttonSize))
+		{
+			value = reset_value;
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+		ImGui::SameLine();
+		ImGui::PushItemWidth(-5);
+		ImGui::DragInt("##value", &value, 0.01f, -10000.0f, 10000.0f, "%.2f");
+	}
 	ImGui::PopID();
 	return false;
 }
@@ -298,10 +440,13 @@ bool Fracture::UIElement::ColorProperty(const std::string& label, glm::vec3& val
 		ImGui::PushItemWidth(-5);
 		float col[3] = { value.x,value.y,value.z };
 
-		if (ImGui::ColorEdit3("##color", col, 0))
+		ImGui::PushItemWidth(32);
+		ImGuiColorEditFlags flag = ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs ;
+		if (ImGui::ColorPicker3("##color", col,flag))
 		{
 			value = glm::vec3(col[0], col[1], col[2]);
 		}
+		ImGui::PopItemWidth();
 	}
 	ImGui::PopID();
 

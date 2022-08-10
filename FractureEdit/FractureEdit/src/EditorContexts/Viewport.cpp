@@ -22,6 +22,8 @@ void Fracture::Viewport::OnInit()
 	mScaleIcon = AssetManager::GetTextureByName("ScaleIcon");
 	mMoveIcon = AssetManager::GetTextureByName("MoveIcon");
 	mSelectIcon = AssetManager::GetTextureByName("SelectIcon");
+	
+	SetImGuizmoOperation(ImGuizmo::OPERATION::TRANSLATE);
 }
 
 void Fracture::Viewport::OnUpdate()
@@ -86,32 +88,32 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 	}
 
 	//TODO need to implement Select mode with no Gizmos?
-
+	ImVec2 button_size = ImVec2{ 16, 16 };
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 1 , 1 });
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 0.2f));
 	ImGui::SetCursorPos(ImVec2{ 10,ImGui::GetContentRegionAvail().y + 40 });
-	if (ImGui::ImageButton((ImTextureID)mSelectIcon->RenderID, ImVec2 { 32, 32 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+
+	if (ImGui::ImageButton((ImTextureID)mSelectIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
 	{
 		IsSelectMode = !IsSelectMode;
 		IsOverButton = true;
 	}
 	ImGui::SameLine();
-	if (ImGui::ImageButton((ImTextureID)mRotateIcon->RenderID, ImVec2 { 32, 32 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+	if (ImGui::ImageButton((ImTextureID)mRotateIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
 	{
 		SetImGuizmoOperation(ImGuizmo::OPERATION::ROTATE);
 		IsOverButton = true;
 	}
 	ImGui::SameLine();	
-	if (ImGui::ImageButton((ImTextureID)mScaleIcon->RenderID, ImVec2 { 32, 32 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+	if (ImGui::ImageButton((ImTextureID)mScaleIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
 	{
 		SetImGuizmoOperation
 		(ImGuizmo::OPERATION::SCALE);
 		IsOverButton = true;
 	}
-
 	ImGui::SameLine();
-	if (ImGui::ImageButton((ImTextureID)mRotateIcon->RenderID, ImVec2 { 32, 32 }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
+	if (ImGui::ImageButton((ImTextureID)mRotateIcon->RenderID, button_size, ImVec2{ 0, 1 }, ImVec2{ 1, 0 }))
 	{
 		SetImGuizmoOperation(ImGuizmo::OPERATION::ROTATE);
 		IsOverButton = true;
@@ -175,13 +177,7 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 						context.position = ray.origin + (ray.direction * outT);
 						context.isSelected = true;
 						m_SelectionContext.push_back(context);
-					}
-					else
-					{
-						IsEditing = false;
-						m_SelectionContext.clear();
-						EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(UUID()));
-					}
+					}					
 				}
 
 				for (const auto& component : EditorApplication::CurrentScene()->PointlightComponents)
@@ -197,19 +193,17 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 						context.isSelected = true;
 						m_SelectionContext.push_back(context);
 						clearselection = false;
-					}
-					else
-					{
-						IsEditing = false;
-						m_SelectionContext.clear();
-						EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(UUID()));
-					}
+					}					
 				}
-
-				std::sort(m_SelectionContext.begin(), m_SelectionContext.end(), [](auto& a, auto& b) { return a.distance < b.distance; });
+				if (m_SelectionContext.empty())
+				{
+					EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(UUID()));
+				}
 
 				if (!m_SelectionContext.empty())
 				{
+					std::sort(m_SelectionContext.begin(), m_SelectionContext.end(), [](auto& a, auto& b) { return a.distance < b.distance; });
+
 					EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(UUID()));
 					EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(m_SelectionContext[0].entityID));
 					IsEditing = true;
@@ -241,43 +235,41 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 				mode = ImGuizmo::MODE::LOCAL;
 
 			if (ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
-				currentImGuizmoOperation, mode, glm::value_ptr(mTransform->WorldMatrix), glm::value_ptr(delta_transform)))
-			{
-				if (ImGuizmo::IsUsing())
+				currentImGuizmoOperation, mode, glm::value_ptr(mTransform->WorldMatrix), glm::value_ptr(delta_transform)))			
 				{
-					glm::vec3 delta_scale;
-					glm::vec3 delta_rotation;
-					glm::vec3 delta_position;
-					Math::DecomposeTransform(delta_transform, delta_position, delta_rotation, delta_scale);
+				if (ImGuizmo::IsUsing())
+					{
+						glm::vec3 delta_scale;
+						glm::vec3 delta_rotation;
+						glm::vec3 delta_position;
+						Math::DecomposeTransform(delta_transform, delta_position, delta_rotation, delta_scale);
 
-					glm::vec3 scale;
-					glm::vec3 rotation;
-					glm::vec3 position;
-					Math::DecomposeTransform(mTransform->WorldMatrix, position, rotation, scale);
+						glm::vec3 scale;
+						glm::vec3 rotation;
+						glm::vec3 position;
+						Math::DecomposeTransform(mTransform->WorldMatrix, position, rotation, scale);
 
-					switch (gizmoMode)
-					{
-					case ImGuizmo::OPERATION::TRANSLATE:
-					{
-						mTransform->Position += delta_position;
-						mTransform->IsDirty = true;
-						break;
-					}
-					case ImGuizmo::OPERATION::ROTATE:
-					{
-						mTransform->Rotation += glm::vec3(glm::degrees(delta_rotation.x), glm::degrees(delta_rotation.y), glm::degrees(delta_rotation.z));
-						mTransform->IsDirty = true;
-						break;
-					}
-					case ImGuizmo::OPERATION::SCALE:
-					{
-						mTransform->Scale *= delta_scale;
-						mTransform->IsDirty = true;
-						break;
-					}
+						switch (gizmoMode)
+						{
+						case ImGuizmo::OPERATION::TRANSLATE:
+						{
+							TransformSystem::Translate(*mTransform, delta_position);
+							break;
+						}
+						case ImGuizmo::OPERATION::ROTATE:
+						{
+							TransformSystem::Rotate(*mTransform, glm::vec3(glm::degrees(delta_rotation.x), glm::degrees(delta_rotation.y), glm::degrees(delta_rotation.z)));
+							break;
+						}
+						case ImGuizmo::OPERATION::SCALE:
+						{
+							TransformSystem::Scale(*mTransform, delta_scale);
+							break;
+						}
+						}
 					}
 				}
-			}
+			
 		}
 	}
 	}
@@ -327,6 +319,7 @@ bool Fracture::Viewport::IsOnGizomModeButtons()
 void Fracture::Viewport::SetImGuizmoOperation(ImGuizmo::OPERATION operation)
 {
 	currentImGuizmoOperation = operation;
+	gizmoMode = operation;
 }
 
 bool Fracture::Viewport::IsGizmoValid() const

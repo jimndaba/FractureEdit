@@ -18,6 +18,8 @@ namespace Fracture
 
 		void OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt);
 
+		void OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt);
+
 
 	private:
 		UUID Selection;

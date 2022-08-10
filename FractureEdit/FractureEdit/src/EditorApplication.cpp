@@ -11,7 +11,7 @@
 #include "imgui/ImGuizmo.h"
 #include "serialisation/SceneSerialiser.h"
 #include "Utils/FileDialogue.h"
-#include "EditorContexts/Panels/EngineOptionsPanels.h"
+
 #include "Utils/WindowsUtils.h"
 #include <ShlObj_core.h>
 #include "assets/MeshLoader.h"
@@ -28,7 +28,8 @@ std::unique_ptr<Fracture::GameWindow> Fracture::EditorApplication::mWindow;
 std::unique_ptr<Fracture::FractureProject>  Fracture::EditorApplication::mProject;
 
 int  Fracture::EditorApplication::mGuiID;
-
+bool Fracture::EditorApplication::_ShowNewSceneModal = false;
+bool Fracture::EditorApplication::_ShowNewProjectModal = false;
 
 Fracture::EditorApplication::EditorApplication()
 {
@@ -56,7 +57,6 @@ void Fracture::EditorApplication::Init()
 	}
 	{
 		Assets = std::make_unique<AssetManager>();
-		Assets->Init();
 	}	
 	{
 		EventDispatcher = std::make_unique<Eventbus>();
@@ -65,26 +65,17 @@ void Fracture::EditorApplication::Init()
 		mInput = std::make_unique<Input>(mWindow->Context());
 	}
 
-	{
-		//TODO - Asset File needs to Have Register of converted files
-		//Assets->AddStaticMesh("Helmet", "Content\\meshes\\Helmet\\HEML1.fbx");
-		Assets->AddStaticMesh("Cube", "Content\\meshes\\Primitives\\Cube.gltf");
-		Assets->AddStaticMesh("Cylinder", "Content\\meshes\\Primitives\\Cylinder.gltf");
-		Assets->AddStaticMesh("Sphere", "Content\\meshes\\Primitives\\Sphere.gltf");
-		Assets->AddStaticMesh("Suzanne", "Content\\meshes\\Primitives\\Suzanne.gltf");
-		Assets->AddStaticMesh("Torus", "Content\\meshes\\Primitives\\Torus.gltf");
-		Assets->AddStaticMesh("Cone", "Content\\meshes\\Primitives\\Cone.gltf");
-		Assets->AddStaticMesh("Plane", "Content\\meshes\\Primitives\\Plane.gltf");
-	}
+	mGuiID = -1;
 	{
 		TextureDescription desc;
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\PointlightIcon.png";
+		desc.Name = "PointlightIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "PointlightIcon";
+	
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -93,10 +84,10 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\OpenIcon.png";
+		desc.Name = "OpenIcon";
 
 		TextureLoader loader;
-		auto texture = loader.Load(desc);
-		texture->Name = "OpenIcon";
+		auto texture = loader.Load(desc);		
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -105,10 +96,10 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\SaveIcon.png";
+		desc.Name = "SaveIcon";
 
 		TextureLoader loader;
-		auto texture = loader.Load(desc);
-		texture->Name = "SaveIcon";
+		auto texture = loader.Load(desc);	
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -117,10 +108,11 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\PlayIcon.png";
+		desc.Name = "PlayIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "PlayIcon";
+
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -129,10 +121,11 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\PauseIcon.png";
+		desc.Name = "PauseIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "PauseIcon";
+
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -141,10 +134,11 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\RotateIcon.png";
+		desc.Name = "RotateIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "RotateIcon";
+	
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -153,10 +147,12 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\MoveIcon.png";
+		desc.Name = "MoveIcon";
+
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "MoveIcon";
+		
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -165,10 +161,12 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\ScaleIcon.png";
+		desc.Name = "ScaleIcon";
+
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "ScaleIcon";
+		
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -177,10 +175,11 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\SelectIcon.png";
+		desc.Name = "SelectIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "SelectIcon";
+	
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
@@ -189,15 +188,28 @@ void Fracture::EditorApplication::Init()
 		desc.Wrap = TextureWrap::ClampToEdge;
 		desc.GenMinMaps = false;
 		desc.Path = "Content\\textures\\EntityIcon.png";
+		desc.Name = "EntityIcon";
 
 		TextureLoader loader;
 		auto texture = loader.Load(desc);
-		texture->Name = "EntityIcon";
+		
 		Device::CreateTexture(texture.get());
 		Assets->AddTexture(std::move(texture));
 	}
 
-	mGuiID = -1;
+	{
+		TextureDescription desc;
+		desc.Wrap = TextureWrap::ClampToEdge;
+		desc.GenMinMaps = false;
+		desc.Path = "Content\\textures\\DefaultGrid.png";
+		desc.Name = "Blank_Texture";
+
+		TextureLoader loader;
+		auto texture = loader.Load(desc);
+
+		Device::CreateTexture(texture.get());
+		Assets->AddTexture(std::move(texture));
+	}
 
 
 	IMGUI_CHECKVERSION();
@@ -244,8 +256,8 @@ void Fracture::EditorApplication::Init()
 
 	mCurrentContext = mLevelEditor.get();
 
-	EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene));
-
+	mNewSceneModal = std::make_unique<NewSceneOptions>();
+	mNewProjectModal = std::make_unique<NewProjectOptions>(*this);
 }
 
 void Fracture::EditorApplication::Run()
@@ -336,16 +348,28 @@ void Fracture::EditorApplication::Render()
 			}
 			if (ImGui::BeginTabItem("Audio Editor", &_ShowAudiEditor))
 			{
-
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Game", &_ShowAudiEditor))
 			{
-
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
 		}
+
+		if (_ShowNewSceneModal)
+		{
+			ImGui::OpenPopup("New Scene Modal");
+			mNewSceneModal->OnRender(&_ShowNewSceneModal);
+		}
+
+
+		if (_ShowNewProjectModal)
+		{
+			ImGui::OpenPopup("New Project");
+			mNewProjectModal->OnRender(&_ShowNewProjectModal);
+		}
+
 
 		ImVec2 button_size = {10,10 };
 		ImGui::SameLine(ImGui::GetContentRegionMax().x * 0.5f);
@@ -402,24 +426,18 @@ void Fracture::EditorApplication::DrawMenubar()
 		{
 			if(ImGui::MenuItem("New Project"))
 			{
-				FileDialogue fd;
-				auto directory = fd.SelectDirectory();
+				
+				_ShowNewProjectModal = true;
 
-				if (!directory.empty())
-				{
-					ProjectParams p;
-					p.Name = "Untitled";
-					p.path = directory;
-					NewProject(p);
-				}
+				
 			};
+
 			if (ImGui::MenuItem("Open Project"))
 			{
-				//steps to loading Project.
-
-				//1 - load directory paths and file paths.
-				//2 - register all assets
-				//3 - load scene and assets for scene.
+				if (LoadProject())
+				{
+					std::cout << "Loaded Project\n";
+				}
 
 
 			};
@@ -557,6 +575,19 @@ void Fracture::EditorApplication::DrawMenubar()
 
 						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
 					}
+					if (ImGui::MenuItem("Capsule"))
+					{
+						auto entity = mCurrentScene->AddEntity();
+						mCurrentScene->AddTagComponent(entity, "Capsule");
+						mCurrentScene->AddTransformComponent(entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f), glm::vec3(0, 0, 0));
+						mCurrentScene->AddStaticMeshComponent(entity, "Capsule", Assets->GetStaticMesh("Capsule"));
+						HierachyParams p;
+						p.Parent = mCurrentScene->RootEntity;
+						p.HasParent = true;
+						mCurrentScene->AddHierachyComponent(entity, p);
+
+						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
+					}
 					if (ImGui::MenuItem("Pointlight"))
 					{
 						auto entity = mCurrentScene->AddEntity();
@@ -570,7 +601,7 @@ void Fracture::EditorApplication::DrawMenubar()
 
 						Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
 					}
-					if (ImGui::MenuItem("Model"))
+					if (ImGui::MenuItem("Static Mesh"))
 					{
 
 						FileDialogue oF;
@@ -661,6 +692,307 @@ void Fracture::EditorApplication::DrawMenubar()
 void Fracture::EditorApplication::Close()
 {
 	IsRunning = false;
+}
+
+Fracture::Eventbus* Fracture::EditorApplication::Dispatcher()
+{
+	return EventDispatcher.get();
+}
+
+Fracture::Scene* Fracture::EditorApplication::CurrentScene()
+{
+	return mCurrentScene.get();
+}
+
+int Fracture::EditorApplication::NextGuiID()
+{
+	return mGuiID += 1;
+}
+
+void Fracture::EditorApplication::NewScene()
+{
+	if (mProject)
+	{
+		if (mCurrentScene)
+		{
+			mCurrentScene.reset();
+		}
+
+		mCurrentScene = std::make_unique<Scene>();
+		{
+			auto camera = mCurrentScene->AddEntity();
+			mCurrentScene->AddTagComponent(camera, "Camera");
+			mCurrentScene->AddTransformComponent(camera);
+			mCurrentScene->AddCameraComponent(camera);
+			HierachyParams p;
+			p.Parent = mCurrentScene->RootEntity;
+			p.HasParent = true;
+			mCurrentScene->AddHierachyComponent(camera, p);
+			mCurrentScene->ActiveCamera = camera;
+			_ShowNewSceneModal = true;
+		}		
+		EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene.get()));
+	}
+}
+
+void Fracture::EditorApplication::SaveScene()
+{
+	SceneSerialiser serialiser(*mCurrentScene, IOMode::Save, SerialiseFormat::Json);
+	serialiser.WriteScene();
+	serialiser.Save(mProject->ContentDirectory + "\\scenes\\"+ mCurrentScene->Name + ".scene");
+	mProject->ActiveScene = mProject->ContentDirectory + "\\scenes\\" + mCurrentScene->Name + ".scene";
+
+	Assets->SaveResources();
+}
+
+void Fracture::EditorApplication::OpenScene()
+{
+	FileDialogue oF;
+	auto path = oF.OpenFile(mWindow.get(), "Scene(*.scene)\0 * .scene\0All files(*.*)\0 * .*");
+	if (!path.empty())
+	{
+		SceneSerialiser serialiser(*mCurrentScene, IOMode::Open, SerialiseFormat::Json);
+		serialiser.Open(path);
+		auto scene = serialiser.ReadScene();
+		if (scene)
+		{
+			EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
+			mCurrentScene = scene;
+		}
+	}
+}
+
+void Fracture::EditorApplication::NewProject(const ProjectParams& p)
+{
+	if (!p.path.empty())
+	{
+		int root = _mkdir((p.path + "\\" + p.Name).c_str());
+		int bin = _mkdir((p.path + "\\" + p.Name + "\\bin").c_str());
+		int src = _mkdir((p.path + "\\" + p.Name + "\\src").c_str());
+		int vendor = _mkdir((p.path + "\\" + p.Name + "\\vendor").c_str());
+		int intmids = _mkdir((p.path + "\\" + p.Name + "\\int").c_str());
+
+		std::string contentDir = p.path + "\\" + p.Name + "\\bin\\content";
+		int check = _mkdir(contentDir.c_str());
+		//FRACTURE_INFO("Creating Content Dir: {}", p.path + "\\" + p.Name + "\\bin\\content");
+
+		if (check == 0)
+		{
+			int models = _mkdir((contentDir + "\\meshes").c_str());
+			int scenes = _mkdir((contentDir + "\\scenes").c_str());
+			int rendergraphs = _mkdir((contentDir + "\\rendergraphs").c_str());
+			int shaders = _mkdir((contentDir + "\\shaders").c_str());
+			int textures = _mkdir((contentDir + "\\textures").c_str());
+			int fonts = _mkdir((contentDir + "\\fonts").c_str());
+			int scripts = _mkdir((contentDir + "\\scripts").c_str());
+			int materials = _mkdir((contentDir + "\\materials").c_str());
+
+
+			if (mProject)
+			{
+				CloseProject();
+				mProject.reset();
+			}
+
+			mProject = std::make_unique<FractureProject>();
+			mProject->ID = UUID();
+			mProject->Directory = p.path+ "\\" + p.Name;
+			mProject->ContentDirectory = contentDir;
+			mProject->AssetsFileDirectory = contentDir + "\\AssetRegister.assets";
+			mProject->Name = p.Name;
+			mWindow->SetTitle("Fracture Engine: " + mProject->Name);
+
+			{
+				AssetManagerParams params;
+				params.ContentFolder = contentDir;
+				params.AssetFilePath = mProject->AssetsFileDirectory;
+				Assets.get()->NewAssetRegister(params);
+			}
+			{
+				//TODO - Asset File needs to Have Register of converted files
+				//Assets->AddStaticMesh("Helmet", "Content\\meshes\\Helmet\\HEML1.fbx");
+				Assets->AddStaticMesh("Cube", "Content\\meshes\\Primitives\\Cube.obj");
+				Assets->AddStaticMesh("Cylinder", "Content\\meshes\\Primitives\\Cylinder.obj");
+				Assets->AddStaticMesh("Sphere", "Content\\meshes\\Primitives\\Sphere.obj");
+				Assets->AddStaticMesh("Suzanne", "Content\\meshes\\Primitives\\Suzanne.obj");
+				Assets->AddStaticMesh("Torus", "Content\\meshes\\Primitives\\Torus.obj");
+				Assets->AddStaticMesh("Cone", "Content\\meshes\\Primitives\\Cone.obj");
+				Assets->AddStaticMesh("Plane", "Content\\meshes\\Primitives\\Plane.obj");
+				Assets->AddStaticMesh("Capsule", "Content\\meshes\\Primitives\\Capsule.fbx");
+			}
+			{
+				TextureDescription desc;
+				desc.Name = "DefaultHDR";
+				desc.Path = "Content\\textures\\open_field.hdr";
+				desc.AttachmentTrgt = AttachmentTarget::Color;
+				desc.TextureTarget = TextureTarget::Texture2D;
+				desc.format = Format::RGB;
+				desc.formatType = FormatType::Float;
+				desc.internalFormat = InternalFormat::RGB16F;
+				desc.minFilter = TextureMinFilter::Linear;
+				desc.magFilter = TextureMagFilter::Linear;
+				desc.Wrap = TextureWrap::ClampToEdge;
+				desc.ID = UUID();
+
+				TextureRegistry reg;
+				reg.ID = desc.ID;
+				reg.Name = desc.Name;
+				reg.Path = desc.Path;
+				reg.type = TextureRegistry::TextureType::HDR;
+		
+
+				TextureLoader loader;
+				auto HDRTexture = loader.LoadHDR(desc);
+				reg.Description = desc;
+				Assets->RegisterTexture(reg);
+
+				Device::CreateTexture(HDRTexture.get());
+				Assets->AddTexture(std::move(HDRTexture));
+
+			}
+
+			
+			auto scene = std::make_shared<Scene>();
+			{
+				auto camera = scene->AddEntity();
+				scene->AddTagComponent(camera, "Camera");
+				scene->AddTransformComponent(camera);
+				scene->AddCameraComponent(camera);
+				HierachyParams p;
+				p.Parent = scene->RootEntity;
+				p.HasParent = true;
+				scene->AddHierachyComponent(camera, p);
+				scene->ActiveCamera = camera;
+			}		
+			EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*scene.get()));
+			mCurrentScene = scene;				
+
+			mLevelEditor->OnLoad();
+
+			_ShowNewSceneModal = true;
+			SaveProject();			
+		}
+	}
+}
+
+void Fracture::EditorApplication::SaveProject()
+{
+	if (mProject)
+	{
+		Serialiser s(IOMode::Save, SerialiseFormat::Json);
+		s.BeginStruct("FractureProject");
+		s.Property("Directory", mProject->Directory);
+		s.Property("Name", mProject->Name);
+		s.Property("ContentDirectory", mProject->ContentDirectory);
+		s.Property("ActiveScenePath", mProject->ContentDirectory + "\\scenes\\" + mCurrentScene->Name + ".scene");
+		s.Property("AssetFileDirectory", mProject->AssetsFileDirectory);
+		s.EndStruct();
+
+		s.BeginStruct("ViewportCameraProperties");
+		s.Property("Position", mLevelEditor->mSceneView->ViewportCamera()->Position);
+		s.Property("Front", mLevelEditor->mSceneView->ViewportCamera()->Front);
+		s.Property("Right", mLevelEditor->mSceneView->ViewportCamera()->Right);
+		s.Property("Yaw", mLevelEditor->mSceneView->ViewportCamera()->Yaw);
+		s.Property("Pitch", mLevelEditor->mSceneView->ViewportCamera()->Pitch);
+		s.Property("Roll", mLevelEditor->mSceneView->ViewportCamera()->Roll);
+		s.Property("IsDepthOfField", mLevelEditor->mSceneView->ViewportCamera()->EnableDepthOfField);
+		s.Property("FoV", mLevelEditor->mSceneView->ViewportCamera()->FoV);
+		s.Property("Speed", mLevelEditor->mSceneView->ViewportCamera()->Speed);
+		s.Property("Sensitivity", mLevelEditor->mSceneView->ViewportCamera()->Sensitivity);
+		s.Property("Damping", mLevelEditor->mSceneView->ViewportCamera()->Damping);
+		s.EndStruct();
+
+		s.Save(mProject->Directory + mProject->Name + ".FractureProject");
+
+		SaveScene();
+
+		Assets->SaveAssetRegister(mProject->AssetsFileDirectory);
+		_IsProjectDirty = false;
+	}
+}
+
+bool Fracture::EditorApplication::LoadProject()
+{
+	FileDialogue oF;
+	auto path = oF.OpenFile(mWindow.get(), "Fracture Project(*.FractureProject)\0 * .FractureProject\0All files(*.*)\0 * .*");
+	if (!path.empty())
+	{
+		if (mProject)
+		{
+			CloseProject();
+		}
+		{
+			Serialiser serialiser(IOMode::Open, SerialiseFormat::Json);
+			serialiser.Open(path);
+			if (serialiser.BeginStruct("FractureProject"))
+			{
+				mProject = std::make_unique<FractureProject>();
+				mProject->Name = serialiser.STRING("Name");
+				mProject->Directory = serialiser.STRING("Directory");
+				mProject->ContentDirectory = serialiser.STRING("ContentDirectory");
+				mProject->ActiveScenePath = serialiser.STRING("ActiveScenePath");
+				mProject->AssetsFileDirectory = serialiser.STRING("AssetFileDirectory");
+				mWindow->SetTitle(mProject->Name);
+				serialiser.EndStruct();
+			}
+
+			if (serialiser.BeginStruct("ViewportCameraProperties"))
+			{
+				mLevelEditor->mSceneView->ViewportCamera()->TargetPosition = serialiser.VEC3("Position");
+				mLevelEditor->mSceneView->ViewportCamera()->Position = serialiser.VEC3("Position");
+
+				mLevelEditor->mSceneView->ViewportCamera()->Front = serialiser.VEC3("Front");
+				mLevelEditor->mSceneView->ViewportCamera()->Right = serialiser.VEC3("Right");
+
+				mLevelEditor->mSceneView->ViewportCamera()->TargetYaw = serialiser.FLOAT("Yaw");
+				mLevelEditor->mSceneView->ViewportCamera()->Yaw = serialiser.FLOAT("Yaw");
+
+				mLevelEditor->mSceneView->ViewportCamera()->TargetPitch = serialiser.FLOAT("Pitch");
+				mLevelEditor->mSceneView->ViewportCamera()->Pitch = serialiser.FLOAT("Pitch");
+
+				mLevelEditor->mSceneView->ViewportCamera()->TargetRoll = serialiser.FLOAT("Roll");
+				mLevelEditor->mSceneView->ViewportCamera()->Roll = serialiser.FLOAT("Roll");
+
+				mLevelEditor->mSceneView->ViewportCamera()->EnableDepthOfField = serialiser.BOOL("IsDepthOfField");
+
+
+				mLevelEditor->mSceneView->ViewportCamera()->FoV = serialiser.FLOAT("FoV");
+				mLevelEditor->mSceneView->ViewportCamera()->Speed = serialiser.FLOAT("Speed");
+				mLevelEditor->mSceneView->ViewportCamera()->Sensitivity = serialiser.FLOAT("Sensitivity");
+				mLevelEditor->mSceneView->ViewportCamera()->Damping = serialiser.FLOAT("Damping");
+				serialiser.EndStruct();
+			}
+		}
+		{
+			Assets->LoadAssetRegister(mProject->AssetsFileDirectory);
+
+			if (!mProject->ActiveScenePath.empty())
+			{
+				SceneSerialiser serialiser(*mCurrentScene, IOMode::Open, SerialiseFormat::Json);
+				serialiser.Open(mProject->ActiveScenePath);
+				auto scene = serialiser.ReadScene();
+				if (scene)
+				{
+					EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
+					mCurrentScene = scene;
+				}
+			}
+
+			mLevelEditor->OnLoad();
+		}
+		return true;
+	}
+	return false;
+
+}
+
+void Fracture::EditorApplication::CloseProject()
+{
+}
+
+Fracture::FractureProject* Fracture::EditorApplication::CurrentProject()
+{
+	return mProject.get();
 }
 
 void Fracture::EditorApplication::GuiStyle()
@@ -762,163 +1094,4 @@ void Fracture::EditorApplication::GuiStyle()
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 #endif
-}
-
-Fracture::Eventbus* Fracture::EditorApplication::Dispatcher()
-{
-	return EventDispatcher.get();
-}
-
-Fracture::Scene* Fracture::EditorApplication::CurrentScene()
-{
-	return mCurrentScene.get();
-}
-
-int Fracture::EditorApplication::NextGuiID()
-{
-	return mGuiID += 1;
-}
-
-void Fracture::EditorApplication::NewScene()
-{
-	if (mProject)
-	{
-		if (mCurrentScene)
-		{
-			mCurrentScene.reset();
-		}
-
-		mCurrentScene = std::make_unique<Scene>();
-		{
-			auto camera = mCurrentScene->AddEntity();
-			mCurrentScene->AddTagComponent(camera, "Camera");
-			mCurrentScene->AddTransformComponent(camera);
-			mCurrentScene->AddCameraComponent(camera);
-			HierachyParams p;
-			p.Parent = mCurrentScene->RootEntity;
-			p.HasParent = true;
-			mCurrentScene->AddHierachyComponent(camera, p);
-			mCurrentScene->ActiveCamera = camera;
-		}		
-		EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene.get()));
-	}
-}
-
-void Fracture::EditorApplication::SaveScene()
-{
-	FileDialogue saveFile;
-	auto path = saveFile.SaveFile(mWindow.get(), "Scene (*.scene)\0");
-	if (!path.empty())
-	{
-		SceneSerialiser serialiser(*mCurrentScene, IOMode::Save, SerialiseFormat::Json);
-		serialiser.WriteScene();
-		serialiser.Save(path + ".scene");
-	}
-}
-
-void Fracture::EditorApplication::OpenScene()
-{
-	FileDialogue oF;
-	auto path = oF.OpenFile(mWindow.get(), "Scene(*.scene)\0 * .scene\0All files(*.*)\0 * .*");
-	if (!path.empty())
-	{
-		SceneSerialiser serialiser(*mCurrentScene, IOMode::Open, SerialiseFormat::Json);
-		serialiser.Open(path);
-		auto scene = serialiser.ReadScene();
-		if (scene)
-		{
-			EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
-			mCurrentScene = scene;
-		}
-	}
-}
-
-void Fracture::EditorApplication::NewProject(const ProjectParams& p)
-{
-	if (!p.path.empty())
-	{
-		int root = _mkdir((p.path + "\\" + p.Name).c_str());
-		int bin = _mkdir((p.path + "\\" + p.Name + "\\bin").c_str());
-		int src = _mkdir((p.path + "\\" + p.Name + "\\src").c_str());
-		int vendor = _mkdir((p.path + "\\" + p.Name + "\\vendor").c_str());
-		int intmids = _mkdir((p.path + "\\" + p.Name + "\\int").c_str());
-
-		std::string contentDir = p.path + "\\" + p.Name + "\\bin\\content";
-		int check = _mkdir(contentDir.c_str());
-		//FRACTURE_INFO("Creating Content Dir: {}", p.path + "\\" + p.Name + "\\bin\\content");
-
-		if (check == 0)
-		{
-			int models = _mkdir((contentDir + "\\meshes").c_str());
-			int scenes = _mkdir((contentDir + "\\scenes").c_str());
-			int rendergraphs = _mkdir((contentDir + "\\rendergraphs").c_str());
-			int shaders = _mkdir((contentDir + "\\shaders").c_str());
-			int textures = _mkdir((contentDir + "\\textures").c_str());
-			int fonts = _mkdir((contentDir + "\\fonts").c_str());
-			int scripts = _mkdir((contentDir + "\\scripts").c_str());
-			int materials = _mkdir((contentDir + "\\materials").c_str());
-
-
-			if (mProject)
-			{
-				CloseProject();
-				mProject.reset();
-			}
-
-			mProject = std::make_unique<FractureProject>();
-			mProject->ID = UUID();
-			mProject->Directory = p.path+ "\\" + p.Name;
-			mProject->ContentDirectory = contentDir;
-			mProject->AssetsFileDirectory = contentDir + "\\Assets.frRes";
-			mProject->Name = p.Name;
-			mWindow->SetTitle("Fracture Engine: " + mProject->Name);
-			
-			auto scene = std::make_shared<Scene>();
-			{
-				auto camera = scene->AddEntity();
-				scene->AddTagComponent(camera, "Camera");
-				scene->AddTransformComponent(camera);
-				scene->AddCameraComponent(camera);
-				HierachyParams p;
-				p.Parent = scene->RootEntity;
-				p.HasParent = true;
-				scene->AddHierachyComponent(camera, p);
-				scene->ActiveCamera = camera;
-			}		
-			EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*scene.get()));
-			mCurrentScene = scene;
-			SaveProject();			
-		}
-	}
-}
-
-void Fracture::EditorApplication::SaveProject()
-{
-	if (mProject)
-	{
-		Serialiser s(IOMode::Save, SerialiseFormat::Json);
-		s.BeginStruct("FractureProject");
-		s.Property("Directory", mProject->Directory);
-		s.Property("Name", mProject->Name);
-		s.Property("ContentDirectory", mProject->ContentDirectory);
-		s.Property("ActiveScenePath", mProject->ActiveScenePath);
-		s.Property("AssetFileDirectory", mProject->AssetsFileDirectory);
-		s.EndStruct();
-		s.Save(mProject->Directory + mProject->Name + ".FractureProject");
-		Assets->SaveAssetRegister(mProject->ContentDirectory);
-		_IsProjectDirty = false;
-	}
-}
-
-void Fracture::EditorApplication::LoadProject()
-{
-}
-
-void Fracture::EditorApplication::CloseProject()
-{
-}
-
-Fracture::FractureProject* Fracture::EditorApplication::CurrentProject()
-{
-	return mProject.get();
 }

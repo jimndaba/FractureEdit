@@ -39,6 +39,7 @@ namespace Fracture
 		LevelEditor();
 		void OnInit();
 		void OnUpdate();
+		void OnLoad();
 		void OnRender(bool* p_open, Device* device);
 		void RenderToolbar();
 

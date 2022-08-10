@@ -4,6 +4,12 @@
 
 namespace Fracture
 {
+	struct ProjectParams
+	{
+		std::string Name;
+		std::string path;
+	};
+
 
 	struct FractureProject
 	{
@@ -13,6 +19,7 @@ namespace Fracture
 		std::string Directory;
 		std::string ContentDirectory;
 		std::string AssetsFileDirectory;
+		std::string ProjectsDirectory;
 		
 		std::string ActiveScene;
 		std::string ActiveRendergraph;

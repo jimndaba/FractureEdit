@@ -10,14 +10,15 @@ namespace Fracture
 	struct ProjectOptions;
 
 	class EngineOpitonsContext : public EditingContext
-	{
-		std::shared_ptr<CameraOptions> mCameraOptions;
-		std::shared_ptr<ProjectOptions> mProjectOptions;
+	{		
 	public:
 		EngineOpitonsContext();
 		void OnInit();
 		void OnUpdate();
 		void OnRender(bool* p_open, Device* device);
+
+		std::shared_ptr<CameraOptions> mCameraOptions;
+		std::shared_ptr<ProjectOptions> mProjectOptions;
 	};
 
 }

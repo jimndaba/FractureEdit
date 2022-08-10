@@ -128,6 +128,11 @@ Fracture::StaticMeshComponentPanel::StaticMeshComponentPanel(StaticMeshComponent
 {
 }
 
+void Fracture::StaticMeshComponentPanel::OnAttach()
+{
+	blank_texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+}
+
 void Fracture::StaticMeshComponentPanel::OnRender(bool* p_open)
 {
 	float button_size = 100;
@@ -139,50 +144,20 @@ void Fracture::StaticMeshComponentPanel::OnRender(bool* p_open)
 		BeginProps(2);
 		PropertyEx("Mesh", component->Mesh->Name);
 		Property("Override Material", &component->OverrideMeshMaterial);
-		
+		EndProps();
+
 		if (component->OverrideMeshMaterial)
 		{
-			auto index = EditorApplication::CurrentScene()->GetMaterialIndex(component->MaterialID);
-			auto& mat = EditorApplication::CurrentScene()->Materials[index];
-
-			const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-
-			int matID = EditorApplication::NextGuiID();
-			ImGui::PushID(matID);
-
-			bool openMat = ImGui::TreeNodeEx((void*)matID, flags, mat->Name.c_str());
-			if (openMat)
-			{
-				Property("Casts shadows?", &mat->CastsShadows);
-				Property("Is Translucent", &mat->IsTranslucent);
-				Property("Is Tiled", &mat->IsTiledTextures);
-				if (mat->IsTiledTextures)
-				{
-					Property("Tiling Scale", mat->TilingScale);
-				}
-				ColorProperty("Diffuse", mat->Diffuse);
-				ColorProperty("Emission", mat->Emmision);
-				ColorProperty("Specular", mat->Specular);
-				Property("Metallic", mat->Metalic, 0.0f);
-				Property("Roughness", mat->Roughness, 0.1f);
-				Property("AO", mat->AO, 0.0f);
-				ImGui::TreePop();
-			}
-			ImGui::PopID();
-
-		}
-		else
-		{
-			for (const auto& mat : component->Mesh->Materials)
+			const auto& mat = AssetManager::GetMaterialbyID(component->MaterialID);			
+			if (mat)
 			{
 				const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-
 				int matID = EditorApplication::NextGuiID();
 				ImGui::PushID(matID);
-
 				bool openMat = ImGui::TreeNodeEx((void*)matID, flags, mat->Name.c_str());
 				if (openMat)
 				{
+					BeginProps(2);
 					Property("Casts shadows?", &mat->CastsShadows);
 					Property("Is Translucent", &mat->IsTranslucent);
 					Property("Is Tiled", &mat->IsTiledTextures);
@@ -196,16 +171,126 @@ void Fracture::StaticMeshComponentPanel::OnRender(bool* p_open)
 					Property("Metallic", mat->Metalic, 0.0f);
 					Property("Roughness", mat->Roughness, 0.1f);
 					Property("AO", mat->AO, 0.0f);
+					EndProps();
+
 					ImGui::TreePop();
 				}
 				ImGui::PopID();
 			}
 		}
+		else
+		{
+			for (const auto& mat_id : component->Mesh->Materials)
+			{
+				const auto& mat = AssetManager::GetMaterialbyID(mat_id);
+				const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+
+				int matID = EditorApplication::NextGuiID();
+				ImGui::PushID(matID);
+				bool openMat = ImGui::TreeNodeEx((void*)matID, flags, mat->Name.c_str());
+				if (openMat)
+				{
+					BeginProps(2);
+					Property("Casts shadows?", &mat->CastsShadows);
+					Property("Is Translucent", &mat->IsTranslucent);
+					Property("Is Tiled", &mat->IsTiledTextures);
+				
+					if (mat->IsTiledTextures)
+					{
+						Property("Tiling Scale", mat->TilingScale);
+					}
+
+
+					uint32_t Diffuse_Texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+					uint32_t Specular_Texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+					uint32_t Metallice_Texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+					uint32_t Roughness_Texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+					uint32_t AO_Texture = AssetManager::GetTextureByName("Blank_Texture")->RenderID;
+
+					if (mat->HasDiffuseTexture)
+					{
+						Diffuse_Texture = AssetManager::GetTextureByID(mat->Textures[DIFFUSE_TEXTURE])->RenderID;
+					}
+					if (mat->HasMetalicTexture)
+					{
+						Metallice_Texture = AssetManager::GetTextureByID(mat->Textures[METAL_TEXTURE])->RenderID;
+					}
+					if (mat->HasRoughnessTexture)
+					{
+						Roughness_Texture = AssetManager::GetTextureByID(mat->Textures[ROUGH_TEXTURE])->RenderID;
+					}
+					if (mat->HasAOTexture)
+					{
+						AO_Texture = AssetManager::GetTextureByID(mat->Textures[AO_TEXTURE])->RenderID;
+					}
+									
+					PropertyImgEx("Diffuse", Diffuse_Texture, mat->Diffuse);
+					PropertyImgEx("Metallic", Metallice_Texture, mat->Metalic);
+					PropertyImgEx("Roughness", Roughness_Texture, mat->Roughness);
+					PropertyImgEx("Ambient Occlusion", AO_Texture, mat->AO);
+					ColorProperty("Specular", mat->Specular);
+					EndProps();
+
+					if (mat->Uniforms.size())
+					{
+						BeginProps(2);
+						for (auto& uniform : mat->Uniforms)
+						{
+							switch (uniform.type)
+							{
+							case UniformType::BOOL:
+							{
+								Property(uniform.Name, &uniform.Data.BOOL);
+								break;
+							}
+							case UniformType::INT:
+							{
+								Property(uniform.Name, uniform.Data.INT);
+								break;
+							}
+							case UniformType::FLOAT:
+							{
+								Property(uniform.Name, uniform.Data.FLOAT);
+								break;
+							}
+							case UniformType::VEC2:
+							{
+								Property(uniform.Name, uniform.Data.VEC2);
+								break;
+							}
+							case UniformType::VEC3:
+							{
+								Property(uniform.Name, uniform.Data.VEC3);
+								break;
+							}
+							case UniformType::VEC4:
+							{
+								Property(uniform.Name, uniform.Data.VEC4);
+								break;
+							}
+							case UniformType::COLOR3:
+							{
+								ColorProperty(uniform.Name, uniform.Data.VEC4);
+								break;
+							}
+							case UniformType::COLOR4:
+							{
+								ColorProperty(uniform.Name, uniform.Data.VEC4);
+								break;
+							}
+							}
+
+						}
+						EndProps();
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+		}
+
 		ImGui::TreePop();
 
-		EndProps();
-
-		ImGui::TreePop();
 	}
 	ImGui::PopID();
 }

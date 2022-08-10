@@ -45,8 +45,10 @@ namespace Fracture
 	struct StaticMeshComponentPanel : public UIElement
 	{
 		StaticMeshComponentPanel(StaticMeshComponent* mesh);
+		void OnAttach();
 		void OnRender(bool* p_open);
 		StaticMeshComponent* component;
+		uint32_t blank_texture;
 	};
 
 

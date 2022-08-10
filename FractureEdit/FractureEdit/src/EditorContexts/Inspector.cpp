@@ -50,9 +50,19 @@ void Fracture::Inspector::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEnti
 	{
 		mElements.push_back(std::make_shared<StaticMeshComponentPanel>(EditorApplication::CurrentScene()->GetStaticMeshComponent(evnt->Entity)));
 	}
+
+	for (const auto& element : mElements)
+	{
+		element->OnAttach();
+	}
 }
+
 
 void Fracture::Inspector::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt)
 {
+	for (const auto& element : mElements)
+	{
+		element->OnDettach();
+	}
 	mElements.clear();
 }

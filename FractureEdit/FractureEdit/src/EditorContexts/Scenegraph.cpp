@@ -69,9 +69,15 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 		if (ImGui::IsItemClicked())
 		{
 			ClearSelection();
-			EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));
-			Selection = entity;
+			EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));			
 		}
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+		{
+			const auto& position = EditorApplication::CurrentScene()->GetTransformComponent(entity)->Position;
+			CameraSystem::LookAt(*Viewport::ViewportCamera(),position);
+		}
+
 		ImGui::TableNextColumn();
 
 		if (opened)
@@ -94,4 +100,9 @@ void Fracture::ScenegraphView::ClearSelection()
 void Fracture::ScenegraphView::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt)
 {
 	Selection = UUID();
+}
+
+void Fracture::ScenegraphView::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)
+{
+	Selection = evnt->Entity;
 }

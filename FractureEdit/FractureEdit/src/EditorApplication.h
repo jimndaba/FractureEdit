@@ -11,17 +11,11 @@
 #include "input/Input.h"
 #include "events/Eventbus.h"
 #include "EditorContexts/OptionsMenuPanel.h"
+#include "EditorContexts/Panels/EngineOptionsPanels.h"
 #include "Project/FractureProject.h"
 
 namespace Fracture
 {
-
-	struct ProjectParams
-	{
-		std::string Name;
-		std::string path;
-	};
-
 	class EditorApplication
 	{
 		static std::unique_ptr<GameWindow> mWindow;
@@ -38,6 +32,8 @@ namespace Fracture
 		static std::unique_ptr<Eventbus> EventDispatcher;
 		static std::unique_ptr<Input> mInput;		
 		static std::shared_ptr<Scene> mCurrentScene;
+		std::unique_ptr<NewSceneOptions> mNewSceneModal;
+		std::unique_ptr<NewProjectOptions> mNewProjectModal;
 
 
 		bool IsRunning = true;
@@ -64,7 +60,7 @@ namespace Fracture
 
 		void NewProject(const ProjectParams& path);
 		void SaveProject();
-		void LoadProject();
+		bool LoadProject();
 		void CloseProject();
 
 		static FractureProject* CurrentProject();
@@ -76,6 +72,8 @@ namespace Fracture
 		bool _ShowGrapEditor = true;
 		bool _ShowAudiEditor = true;
 		bool _ShowEditorOptions = false;
+		static bool _ShowNewSceneModal;
+		static bool _ShowNewProjectModal;
 
 		EditingContext* mCurrentContext = nullptr;
 		static int mGuiID;

@@ -25,11 +25,8 @@ void Fracture::LevelEditor::OnInit()
 
 		mDebugRenderer = std::make_unique<DebugRenderer>(Device::DebugContext());
 		mDebugRenderer->Init();
-	}	
-	{
-		mGraph = std::make_unique<RenderGraph>();
-		mGraph->Setup();
 	}
+	
 
 	mCameraSystem = CameraSystem();
 	mTransformSystem = std::make_unique<TransformSystem>();
@@ -66,6 +63,11 @@ void Fracture::LevelEditor::OnUpdate()
 	}
 }
 
+void Fracture::LevelEditor::OnLoad()
+{
+	mDebugRenderer->Onload();
+}
+
 void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 {
 	if (mCurrenScene)
@@ -97,7 +99,6 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 			Device::SubmitToGpu();
 		}
 
-
 		//ImGui::Begin("DockSpace Demo", p_open);
 		ImGuiIO& io = ImGui::GetIO();
 
@@ -107,11 +108,7 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 			ImGui::DockSpace(dockspace_id);
 		}
 
-
-
-
 		RenderToolbar();
-
 		if (_ShowScenegraph)
 		{
 			mSceneGraph->OnRender(&_ShowScenegraph, device);
@@ -128,13 +125,14 @@ void Fracture::LevelEditor::OnRender(bool* p_open, Device* device)
 		{
 			mAssets->OnRender(&_ShowAssetManager, device);
 		}
+
 	}
 
 }
 
 void Fracture::LevelEditor::RenderToolbar()
 {
-	ImVec2 button_size = {10,10 };
+	ImVec2 button_size = {14,14 };
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4 , 4});
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 1));
@@ -224,6 +222,12 @@ void Fracture::LevelEditor::OnSetScene(const std::shared_ptr<SetSceneForEditing>
 {
 	mCurrenScene = &evnt->scene;
 	mTransformSystem->SetScene(&evnt->scene);
+
+	if(!mGraph)
+	{
+		mGraph = std::make_unique<RenderGraph>();
+		mGraph->Setup();
+	}
 }
 
 void Fracture::LevelEditor::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)

@@ -10,20 +10,49 @@
 
 int Fracture::Viewport::gizmoMode;
 std::unique_ptr<Fracture::CameraComponent> Fracture::Viewport::mViewportCamera;
+std::unique_ptr<Fracture::OutlineRenderer> Fracture::Viewport::mOutlineRenderer;
+std::unique_ptr<Fracture::SceneRenderer> Fracture::Viewport::mSceneRenderer;
+std::unique_ptr<Fracture::DebugRenderer> Fracture::Viewport::mDebugRenderer;
 
-Fracture::Viewport::Viewport() :EditingContext()
+Fracture::Viewport::Viewport(const std::string& name) :EditingContext(),Name(name)
 {
+	currentTime = (float)glfwGetTime();
 }
 
 void Fracture::Viewport::OnInit()
 {
-	mViewportCamera = std::make_unique<CameraComponent>(UUID());
+	if(!mViewportCamera)
+		mViewportCamera = std::make_unique<CameraComponent>(UUID());
+
+	if (!mSceneRenderer) {
+		mSceneRenderer = std::make_unique<SceneRenderer>();
+		mSceneRenderer->Init();
+	}
+
+	if (!mOutlineRenderer)
+	{
+		mOutlineRenderer = std::make_unique<OutlineRenderer>(Device::OutlineContext());
+		mOutlineRenderer->Init();
+	}
+
+	if (!mDebugRenderer)
+	{
+		mDebugRenderer = std::make_unique < DebugRenderer>(Device::DebugContext());
+		mDebugRenderer->Init();
+	}
+
+	mTransformSystem = std::make_unique<TransformSystem>();
+
 	mRotateIcon = AssetManager::GetTextureByName("RotateIcon");
 	mScaleIcon = AssetManager::GetTextureByName("ScaleIcon");
 	mMoveIcon = AssetManager::GetTextureByName("MoveIcon");
-	mSelectIcon = AssetManager::GetTextureByName("SelectIcon");
-	
+	mSelectIcon = AssetManager::GetTextureByName("SelectIcon");	
 	SetImGuizmoOperation(ImGuizmo::OPERATION::TRANSLATE);
+}
+
+void Fracture::Viewport::OnLoad()
+{
+	mDebugRenderer->Onload();
 }
 
 void Fracture::Viewport::OnUpdate()
@@ -48,13 +77,123 @@ void Fracture::Viewport::OnUpdate()
 			}
 		}
 	}
+
+	
+
+	if (mCurrentScene)
+	{
+		mOutlineRenderer->Begin();
+		mDebugRenderer->Begin();
+
+
+		float newTime = (float)glfwGetTime();
+		float frameTime = newTime - currentTime;
+		currentTime = newTime;
+
+		while (frameTime > 0.0)
+		{
+			float deltaTime = std::min(frameTime, dt);
+			{
+				UpdateCamera(deltaTime);
+			}
+
+			frameTime -= deltaTime;
+			t += deltaTime;
+		}
+		mTransformSystem->Update(mCurrentScene->RootEntity, glm::mat4(1.0));
+	}
+
+
+
+
+}
+
+void Fracture::Viewport::UpdateCamera(float dt)
+{
+	const auto& camera = mViewportCamera.get();
+	if (camera)
+	{
+		const glm::vec2& mouse{ Input::GetMousePosition().x,Input::GetMousePosition().y };
+		mouse_delta = (mouse - m_InitialMousePosition) * 0.03f;
+		m_InitialMousePosition = mouse;
+		glm::vec3 pos = camera->Position;
+
+
+		if (IsHovered() || IsFocused())
+		{
+			if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+			{
+				if (Input::IsKeyDown(KeyCode::W))
+				{
+					pos += camera->Front * camera->Speed * dt * 1000.0f;
+				}
+				if (Input::IsKeyDown(KeyCode::A))
+				{
+					pos -= camera->Right * camera->Speed * dt * 1000.0f;
+				}
+				if (Input::IsKeyDown(KeyCode::S))
+				{
+					pos -= camera->Front * camera->Speed * dt * 1000.0f;
+				}
+				if (Input::IsKeyDown(KeyCode::D))
+				{
+					pos += camera->Right * camera->Speed * dt * 1000.0f;
+				}
+				if (Input::IsKeyDown(KeyCode::Q))
+				{
+					pos += camera->Up * camera->Speed * dt * 1000.0f;
+				}
+				if (Input::IsKeyDown(KeyCode::E))
+				{
+					pos -= camera->Up * camera->Speed * dt * 1000.0f;
+				}
+
+				mCameraSystem.OnMouseInput(*camera, mouse_delta.x, mouse_delta.y, false);
+				mCameraSystem.OnTranslate(*camera, pos.x, pos.y, pos.z);
+			}
+		}
+
+	}
+
+	mCameraSystem.Update(*camera, 1.0f / 60.0f);
+	mCameraSystem.UpdateViewMatrix(*camera);
+	mCameraSystem.UpdateProjectionMatrix(*camera, Device::ScreenSize());
+
+
 }
 
 void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 {
-	
+	if(mCurrentScene)
+	{
+		if (IsEditing)
+		{
+			mOutlineRenderer->DrawOutline(SelectedEntity, mCurrentScene);
+		}
+		if (mGraph)
+		{
+			mSceneRenderer->Begin(mCurrentScene, mViewportCamera.get(), Device::GeometryContext());
+			mSceneRenderer->End(Device::GeometryContext());
 
-	ImGui::Begin("Viewport");
+
+			Device::GeometryContext()->Begin();
+			Device::GeometryContext()->BindRenderTarget(0);
+			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+			Device::GeometryContext()->SetViewport(0, 0, Device::GeometryContext()->GetViewSize().x, Device::GeometryContext()->GetViewSize().y);
+
+			mGraph->Run(*EditorApplication::CurrentScene(), mViewportCamera.get());
+
+			Device::GeometryContext()->BindRenderTarget(0);
+			Device::GeometryContext()->ClearBuffers((uint32_t)GLClearBufferBit::Color | (uint32_t)GLClearBufferBit::Depth);
+			
+			mOutlineRenderer->End();
+			mDebugRenderer->End(mViewportCamera.get());
+
+
+			Device::SubmitToGpu();
+		}
+	}
+	ImGui::Begin(Name.c_str());
 	m_ViewportSize = { ImGui::GetContentRegionAvail().x ,  ImGui::GetContentRegionAvail().y };
 	m_ViewportFocused = ImGui::IsWindowFocused();
 	m_ViewportHovered = ImGui::IsWindowHovered();
@@ -279,12 +418,24 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 
 }
 
+void Fracture::Viewport::OnSetScene(const std::shared_ptr<SetSceneForEditing>& evnt)
+{
+	mCurrentScene = &evnt->scene;
+	mTransformSystem->SetScene(&evnt->scene);
+}
+
+void Fracture::Viewport::OnSetRenderGraph(const std::shared_ptr<SetRenderGraph>& evnt)
+{
+	mGraph = &evnt->Graph;
+}
+
 void Fracture::Viewport::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)
 {
 	if (EditorApplication::CurrentScene()->HasTransformComponent(evnt->Entity))
 	{
 		IsEditing = true;
 		mTransform =  EditorApplication::CurrentScene()->GetTransformComponent(evnt->Entity);
+		SelectedEntity = evnt->Entity;
 	}
 }
 
@@ -292,6 +443,7 @@ void Fracture::Viewport::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEn
 {
 	IsEditing = false;
 	mTransform = nullptr;
+	SelectedEntity = UUID();
 }
 
 Fracture::CameraComponent* Fracture::Viewport::ViewportCamera()

@@ -29,3 +29,12 @@ bool Fracture::SetSceneForEditing::Handled()
 {
     return false;
 }
+
+Fracture::SetRenderGraph::SetRenderGraph(RenderGraph& graph):Graph(graph)
+{
+}
+
+bool Fracture::SetRenderGraph::Handled()
+{
+    return false;
+}

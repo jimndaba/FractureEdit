@@ -101,7 +101,10 @@
     <ClCompile Include="src\EditorContexts\OptionsMenuPanel.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\EngineOptionsPanels.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\InspectorPanels.cpp" />
+    <ClCompile Include="src\EditorContexts\Panels\RendergraphPanel.cpp" />
     <ClCompile Include="src\EditorContexts\Panels\UIElement.cpp" />
+    <ClCompile Include="src\EditorContexts\RenderGraphEditor.cpp" />
+    <ClCompile Include="src\EditorContexts\RendergraphInspector.cpp" />
     <ClCompile Include="src\EditorContexts\Scenegraph.cpp" />
     <ClCompile Include="src\EditorContexts\Viewport.cpp" />
     <ClCompile Include="src\EdPCH.cpp">
@@ -155,7 +158,10 @@
     <ClInclude Include="src\EditorContexts\OptionsMenuPanel.h" />
     <ClInclude Include="src\EditorContexts\Panels\EngineOptionsPanels.h" />
     <ClInclude Include="src\EditorContexts\Panels\InspectorPanels.h" />
+    <ClInclude Include="src\EditorContexts\Panels\RendergraphPanel.h" />
     <ClInclude Include="src\EditorContexts\Panels\UIElement.h" />
+    <ClInclude Include="src\EditorContexts\RenderGraphEditor.h" />
+    <ClInclude Include="src\EditorContexts\RendergraphInspector.h" />
     <ClInclude Include="src\EditorContexts\Scenegraph.h" />
     <ClInclude Include="src\EditorContexts\Viewport.h" />
     <ClInclude Include="src\EdPCH.h" />

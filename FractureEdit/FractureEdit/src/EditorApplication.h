@@ -5,6 +5,7 @@
 #include "assets/AssetManager.h"
 #include "scene/Scene.h"
 #include "EditorContexts/LevelEditor.h"
+#include "EditorContexts/RenderGraphEditor.h"
 #include "rendering/OutlineRenderer.h"
 #include "rendering/SceneRenderer.h"
 #include "rendering/DebugRenderer.h"
@@ -21,9 +22,11 @@ namespace Fracture
 		static std::unique_ptr<GameWindow> mWindow;
 		std::unique_ptr<Device> mGraphicsDevice;
 		std::unique_ptr<LevelEditor> mLevelEditor;
+		std::unique_ptr<RenderGraphEditor> mRendergraphEditor;
 		static std::unique_ptr<AssetManager> Assets;
 		std::unique_ptr<EngineOpitonsContext> mEngineOptions;
 		static std::unique_ptr<FractureProject> mProject;
+		std::shared_ptr<Fracture::RenderGraph> mGraph;
 
 		Texture* mPlayIcon;
 		Texture* mPauseIcon;

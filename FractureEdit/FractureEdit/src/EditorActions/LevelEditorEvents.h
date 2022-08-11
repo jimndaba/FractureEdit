@@ -7,6 +7,7 @@
 namespace Fracture
 {
 	class Scene;
+	struct RenderGraph;
 
 	struct SubmitEntityForEdit : public Event
 	{
@@ -27,6 +28,13 @@ namespace Fracture
 		SetSceneForEditing(Scene& s);
 		bool Handled();
 		Scene& scene;
+	};
+
+	struct SetRenderGraph : public Event
+	{
+		SetRenderGraph(RenderGraph& graph);
+		bool Handled();
+		RenderGraph& Graph;
 	};
 }
 

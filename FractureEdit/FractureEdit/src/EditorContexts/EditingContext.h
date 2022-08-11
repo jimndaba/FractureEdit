@@ -19,7 +19,9 @@ namespace Fracture
 		virtual void OnUpdate() = 0;
 		virtual void OnRender(bool* p_open, Device* device) = 0;
 
+
 		virtual void OnSetScene(const std::shared_ptr<SetSceneForEditing>& evnt);
+		virtual void OnSetRenderGraph(const std::shared_ptr<SetRenderGraph>& evnt);
 		virtual void OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt);
 		virtual void OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt);	
 	};	

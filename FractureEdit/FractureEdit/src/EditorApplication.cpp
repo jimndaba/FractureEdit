@@ -10,6 +10,7 @@
 #include "input/Input.h"
 #include "imgui/ImGuizmo.h"
 #include "serialisation/SceneSerialiser.h"
+#include "serialisation/RendergraphSerialiser.h"
 #include "Utils/FileDialogue.h"
 
 #include "Utils/WindowsUtils.h"
@@ -19,7 +20,7 @@
 #pragma comment(lib, "shell32.lib")
 
 bool Fracture::EditorApplication::opt_padding;
-std::unique_ptr<Fracture::RenderGraph> mGraph;
+
 std::unique_ptr<Fracture::Input> Fracture::EditorApplication::mInput;
 std::shared_ptr<Fracture::Scene> Fracture::EditorApplication::mCurrentScene;
 std::unique_ptr<Fracture::Eventbus> Fracture::EditorApplication::EventDispatcher;
@@ -250,12 +251,15 @@ void Fracture::EditorApplication::Init()
 
 	}
 	{
+		mRendergraphEditor = std::make_unique<RenderGraphEditor>();
+		mRendergraphEditor->OnInit();
+	}
+	{
 		mEngineOptions = std::make_unique<EngineOpitonsContext>();
 		mEngineOptions->OnInit();
 	}
 
 	mCurrentContext = mLevelEditor.get();
-
 	mNewSceneModal = std::make_unique<NewSceneOptions>();
 	mNewProjectModal = std::make_unique<NewProjectOptions>(*this);
 }
@@ -344,6 +348,8 @@ void Fracture::EditorApplication::Render()
 			
 			if (ImGui::BeginTabItem("RenderGraph Editor", &_ShowGrapEditor))
 			{
+				mCurrentContext = mRendergraphEditor.get();
+				mRendergraphEditor->OnRender(&_ShowGrapEditor, mGraphicsDevice.get());
 				ImGui::EndTabItem();
 			}
 			if (ImGui::BeginTabItem("Audio Editor", &_ShowAudiEditor))
@@ -731,7 +737,7 @@ void Fracture::EditorApplication::NewScene()
 			mCurrentScene->ActiveCamera = camera;
 			_ShowNewSceneModal = true;
 		}		
-		EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene.get()));
+		Dispatcher()->Publish(std::make_shared<SetSceneForEditing>(*mCurrentScene.get()));
 	}
 }
 
@@ -756,7 +762,7 @@ void Fracture::EditorApplication::OpenScene()
 		auto scene = serialiser.ReadScene();
 		if (scene)
 		{
-			EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
+			Dispatcher()->Publish(std::make_shared<SetSceneForEditing>(*scene));
 			mCurrentScene = scene;
 		}
 	}
@@ -778,7 +784,7 @@ void Fracture::EditorApplication::NewProject(const ProjectParams& p)
 
 		if (check == 0)
 		{
-			int models = _mkdir((contentDir + "\\meshes").c_str());
+			int models = _mkdir((contentDir + "\\meshes").c_str());		
 			int scenes = _mkdir((contentDir + "\\scenes").c_str());
 			int rendergraphs = _mkdir((contentDir + "\\rendergraphs").c_str());
 			int shaders = _mkdir((contentDir + "\\shaders").c_str());
@@ -864,10 +870,14 @@ void Fracture::EditorApplication::NewProject(const ProjectParams& p)
 				scene->AddHierachyComponent(camera, p);
 				scene->ActiveCamera = camera;
 			}		
-			EventDispatcher.get()->Publish(std::make_shared<SetSceneForEditing>(*scene.get()));
+			Dispatcher()->Publish(std::make_shared<SetSceneForEditing>(*scene.get()));
 			mCurrentScene = scene;				
 
 			mLevelEditor->OnLoad();
+
+			mGraph = std::make_unique<RenderGraph>(*Device::GeometryContext());
+			mGraph->Setup();
+			Dispatcher()->Publish(std::make_shared<SetRenderGraph>(*mGraph.get()));
 
 			_ShowNewSceneModal = true;
 			SaveProject();			
@@ -879,34 +889,43 @@ void Fracture::EditorApplication::SaveProject()
 {
 	if (mProject)
 	{
-		Serialiser s(IOMode::Save, SerialiseFormat::Json);
-		s.BeginStruct("FractureProject");
-		s.Property("Directory", mProject->Directory);
-		s.Property("Name", mProject->Name);
-		s.Property("ContentDirectory", mProject->ContentDirectory);
-		s.Property("ActiveScenePath", mProject->ContentDirectory + "\\scenes\\" + mCurrentScene->Name + ".scene");
-		s.Property("AssetFileDirectory", mProject->AssetsFileDirectory);
-		s.EndStruct();
+		{
+			Serialiser s(IOMode::Save, SerialiseFormat::Json);
+			s.BeginStruct("FractureProject");
+			s.Property("Directory", mProject->Directory);
+			s.Property("Name", mProject->Name);
+			s.Property("ContentDirectory", mProject->ContentDirectory);
+			s.Property("ActiveScenePath", mProject->ContentDirectory + "\\scenes\\" + mCurrentScene->Name + ".scene");
+			s.Property("AssetFileDirectory", mProject->AssetsFileDirectory);
+			s.EndStruct();
 
-		s.BeginStruct("ViewportCameraProperties");
-		s.Property("Position", mLevelEditor->mSceneView->ViewportCamera()->Position);
-		s.Property("Front", mLevelEditor->mSceneView->ViewportCamera()->Front);
-		s.Property("Right", mLevelEditor->mSceneView->ViewportCamera()->Right);
-		s.Property("Yaw", mLevelEditor->mSceneView->ViewportCamera()->Yaw);
-		s.Property("Pitch", mLevelEditor->mSceneView->ViewportCamera()->Pitch);
-		s.Property("Roll", mLevelEditor->mSceneView->ViewportCamera()->Roll);
-		s.Property("IsDepthOfField", mLevelEditor->mSceneView->ViewportCamera()->EnableDepthOfField);
-		s.Property("FoV", mLevelEditor->mSceneView->ViewportCamera()->FoV);
-		s.Property("Speed", mLevelEditor->mSceneView->ViewportCamera()->Speed);
-		s.Property("Sensitivity", mLevelEditor->mSceneView->ViewportCamera()->Sensitivity);
-		s.Property("Damping", mLevelEditor->mSceneView->ViewportCamera()->Damping);
-		s.EndStruct();
+			s.BeginStruct("ViewportCameraProperties");
+			s.Property("Position", mLevelEditor.get()->mSceneView->ViewportCamera()->Position);
+			s.Property("Front", mLevelEditor.get()->mSceneView->ViewportCamera()->Front);
+			s.Property("Right", mLevelEditor.get()->mSceneView->ViewportCamera()->Right);
+			s.Property("Yaw", mLevelEditor.get()->mSceneView->ViewportCamera()->Yaw);
+			s.Property("Pitch", mLevelEditor.get()->mSceneView->ViewportCamera()->Pitch);
+			s.Property("Roll", mLevelEditor.get()->mSceneView->ViewportCamera()->Roll);
+			s.Property("IsDepthOfField", mLevelEditor.get()->mSceneView->ViewportCamera()->EnableDepthOfField);
+			s.Property("FocalLength", mLevelEditor.get()->mSceneView->ViewportCamera()->FocalLength);
+			s.Property("FocalRange", mLevelEditor.get()->mSceneView->ViewportCamera()->FocalRange);
+			s.Property("FoV", mLevelEditor.get()->mSceneView->ViewportCamera()->FoV);
+			s.Property("Speed", mLevelEditor.get()->mSceneView->ViewportCamera()->Speed);
+			s.Property("Sensitivity", mLevelEditor.get()->mSceneView->ViewportCamera()->Sensitivity);
+			s.Property("Damping", mLevelEditor.get()->mSceneView->ViewportCamera()->Damping);
+			s.EndStruct();
 
-		s.Save(mProject->Directory + mProject->Name + ".FractureProject");
-
+			s.Save(mProject->Directory + mProject->Name + ".FractureProject");
+		}
 		SaveScene();
 
-		Assets->SaveAssetRegister(mProject->AssetsFileDirectory);
+		{
+			RenderGraphSerialiser s = RenderGraphSerialiser(*mGraph.get(),IOMode::Save,SerialiseFormat::Json);
+			s.WriteGraph();
+			s.Save(mProject->ContentDirectory + "\\rendergraphs\\" + "DefaultGraph.RenderGraph");
+		}
+		Assets.get()->SaveAssetRegister(mProject->AssetsFileDirectory);
+
 		_IsProjectDirty = false;
 	}
 }
@@ -938,33 +957,35 @@ bool Fracture::EditorApplication::LoadProject()
 
 			if (serialiser.BeginStruct("ViewportCameraProperties"))
 			{
-				mLevelEditor->mSceneView->ViewportCamera()->TargetPosition = serialiser.VEC3("Position");
-				mLevelEditor->mSceneView->ViewportCamera()->Position = serialiser.VEC3("Position");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->TargetPosition = serialiser.VEC3("Position");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Position = serialiser.VEC3("Position");
 
-				mLevelEditor->mSceneView->ViewportCamera()->Front = serialiser.VEC3("Front");
-				mLevelEditor->mSceneView->ViewportCamera()->Right = serialiser.VEC3("Right");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Front = serialiser.VEC3("Front");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Right = serialiser.VEC3("Right");
 
-				mLevelEditor->mSceneView->ViewportCamera()->TargetYaw = serialiser.FLOAT("Yaw");
-				mLevelEditor->mSceneView->ViewportCamera()->Yaw = serialiser.FLOAT("Yaw");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->TargetYaw = serialiser.FLOAT("Yaw");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Yaw = serialiser.FLOAT("Yaw");
 
-				mLevelEditor->mSceneView->ViewportCamera()->TargetPitch = serialiser.FLOAT("Pitch");
-				mLevelEditor->mSceneView->ViewportCamera()->Pitch = serialiser.FLOAT("Pitch");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->TargetPitch = serialiser.FLOAT("Pitch");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Pitch = serialiser.FLOAT("Pitch");
 
-				mLevelEditor->mSceneView->ViewportCamera()->TargetRoll = serialiser.FLOAT("Roll");
-				mLevelEditor->mSceneView->ViewportCamera()->Roll = serialiser.FLOAT("Roll");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->TargetRoll = serialiser.FLOAT("Roll");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Roll = serialiser.FLOAT("Roll");
 
-				mLevelEditor->mSceneView->ViewportCamera()->EnableDepthOfField = serialiser.BOOL("IsDepthOfField");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->EnableDepthOfField = serialiser.BOOL("IsDepthOfField");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->FocalLength = serialiser.FLOAT("FocalLength");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->FocalRange = serialiser.FLOAT("FocalRange");
 
 
-				mLevelEditor->mSceneView->ViewportCamera()->FoV = serialiser.FLOAT("FoV");
-				mLevelEditor->mSceneView->ViewportCamera()->Speed = serialiser.FLOAT("Speed");
-				mLevelEditor->mSceneView->ViewportCamera()->Sensitivity = serialiser.FLOAT("Sensitivity");
-				mLevelEditor->mSceneView->ViewportCamera()->Damping = serialiser.FLOAT("Damping");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->FoV = serialiser.FLOAT("FoV");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Speed = serialiser.FLOAT("Speed");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Sensitivity = serialiser.FLOAT("Sensitivity");
+				mLevelEditor.get()->mSceneView->ViewportCamera()->Damping = serialiser.FLOAT("Damping");
 				serialiser.EndStruct();
 			}
 		}
 		{
-			Assets->LoadAssetRegister(mProject->AssetsFileDirectory);
+			Assets.get()->LoadAssetRegister(mProject->AssetsFileDirectory);
 
 			if (!mProject->ActiveScenePath.empty())
 			{
@@ -973,12 +994,19 @@ bool Fracture::EditorApplication::LoadProject()
 				auto scene = serialiser.ReadScene();
 				if (scene)
 				{
-					EventDispatcher->Publish(std::make_shared<SetSceneForEditing>(*scene));
+					Dispatcher()->Publish(std::make_shared<SetSceneForEditing>(*scene));
 					mCurrentScene = scene;
 				}
 			}
 
 			mLevelEditor->OnLoad();
+			{
+				RenderGraphSerialiser s = RenderGraphSerialiser(*mGraph, IOMode::Open, SerialiseFormat::Json);
+				s.Open(mProject->ContentDirectory + "\\rendergraphs\\DefaultGraph.RenderGraph");
+				mGraph = s.ReadGraph();
+				mGraph->Setup();
+			}
+			Dispatcher()->Publish(std::make_shared<SetRenderGraph>(*mGraph.get()));
 		}
 		return true;
 	}

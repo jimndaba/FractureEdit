@@ -236,7 +236,7 @@ bool Fracture::UIElement::Property(const std::string& label, int& value, float r
 bool Fracture::UIElement::Property(const std::string& label, glm::vec2& value, float reset_value)
 {
 	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
-	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+	ImVec2 buttonSize = { lineHeight , lineHeight };
 
 	ImGui::PushID(EditorApplication::NextGuiID());
 
@@ -279,8 +279,8 @@ bool Fracture::UIElement::Property(const std::string& label, glm::vec2& value, f
 
 bool Fracture::UIElement::Property(const std::string& label, glm::vec3& value, float reset_value)
 {
-	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
-	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.0f;
+	ImVec2 buttonSize = { lineHeight + 2.0f, lineHeight };
 
 	ImGui::PushID(EditorApplication::NextGuiID());
 

@@ -69,7 +69,7 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 		if (ImGui::IsItemClicked())
 		{
 			ClearSelection();
-			EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(entity));			
+			EditorApplication::ActionPlayer->Submit<SelectEntityAction>(entity);
 		}
 
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))

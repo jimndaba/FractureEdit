@@ -344,7 +344,7 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 					std::sort(m_SelectionContext.begin(), m_SelectionContext.end(), [](auto& a, auto& b) { return a.distance < b.distance; });
 
 					EditorApplication::Dispatcher()->Publish(std::make_shared<ReleaseEntityFromEdit>(UUID()));
-					EditorApplication::Dispatcher()->Publish(std::make_shared<SubmitEntityForEdit>(m_SelectionContext[0].entityID));
+					EditorApplication::ActionPlayer->Submit<SelectEntityAction>(m_SelectionContext[0].entityID);		
 					IsEditing = true;
 					m_SelectionContext.clear();
 				}

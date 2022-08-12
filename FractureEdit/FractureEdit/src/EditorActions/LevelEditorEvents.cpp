@@ -38,3 +38,12 @@ bool Fracture::SetRenderGraph::Handled()
 {
     return false;
 }
+
+Fracture::SaveProjectEvent::SaveProjectEvent()
+{
+}
+
+bool Fracture::SaveProjectEvent::Handled()
+{
+    return false;
+}

@@ -27,6 +27,7 @@ std::unique_ptr<Fracture::Eventbus> Fracture::EditorApplication::EventDispatcher
 std::unique_ptr<Fracture::AssetManager> Fracture::EditorApplication::Assets;
 std::unique_ptr<Fracture::GameWindow> Fracture::EditorApplication::mWindow;
 std::unique_ptr<Fracture::FractureProject>  Fracture::EditorApplication::mProject;
+std::unique_ptr<Fracture::ActionSystem> Fracture::EditorApplication::ActionPlayer;
 
 int  Fracture::EditorApplication::mGuiID;
 bool Fracture::EditorApplication::_ShowNewSceneModal = false;
@@ -64,6 +65,9 @@ void Fracture::EditorApplication::Init()
 	}
 	{
 		mInput = std::make_unique<Input>(mWindow->Context());
+	}
+	{
+		ActionPlayer = std::make_unique<ActionSystem>();
 	}
 
 	mGuiID = -1;
@@ -262,6 +266,8 @@ void Fracture::EditorApplication::Init()
 	mCurrentContext = mLevelEditor.get();
 	mNewSceneModal = std::make_unique<NewSceneOptions>();
 	mNewProjectModal = std::make_unique<NewProjectOptions>(*this);
+
+	Dispatcher()->Subscribe(this, &Fracture::EditorApplication::OnSaveProject);
 }
 
 void Fracture::EditorApplication::Run()
@@ -272,6 +278,9 @@ void Fracture::EditorApplication::Run()
 	{
 		OPTICK_FRAME("MainThread");
 		mWindow->PollEvents();
+
+		ActionPlayer->Do();
+
 		mGraphicsDevice->Begin();
 
 		Update();	
@@ -715,6 +724,11 @@ int Fracture::EditorApplication::NextGuiID()
 	return mGuiID += 1;
 }
 
+Fracture::GameWindow* Fracture::EditorApplication::Window()
+{
+	return mWindow.get();
+}
+
 void Fracture::EditorApplication::NewScene()
 {
 	if (mProject)
@@ -766,6 +780,11 @@ void Fracture::EditorApplication::OpenScene()
 			mCurrentScene = scene;
 		}
 	}
+}
+
+void Fracture::EditorApplication::OnSaveProject(const std::shared_ptr<SaveProjectEvent>& evnt)
+{
+	SaveProject();
 }
 
 void Fracture::EditorApplication::NewProject(const ProjectParams& p)
@@ -1123,3 +1142,4 @@ void Fracture::EditorApplication::GuiStyle()
 	}
 #endif
 }
+

@@ -3,6 +3,9 @@
 #include "../EditorApplication.h"
 #include "events/Eventbus.h"
 
+bool Fracture::LevelEditor::IsEntitySelected;
+Fracture::UUID Fracture::LevelEditor::SelectedEntity;
+
 Fracture::LevelEditor::LevelEditor() : EditingContext()
 {
 	currentTime = (float)glfwGetTime();
@@ -19,6 +22,8 @@ void Fracture::LevelEditor::OnInit()
 	
 	mSaveIcon = AssetManager::GetTextureByName("SaveIcon");
 	mOpenIcon = AssetManager::GetTextureByName("OpenIcon");
+
+	glfwSetKeyCallback(EditorApplication::Window()->Context(), key_callback);
 
 }
 
@@ -113,4 +118,77 @@ void Fracture::LevelEditor::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEn
 void Fracture::LevelEditor::OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt)
 {
 	IsEntitySelected = false;
+}
+
+void Fracture::LevelEditor::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+	if (IsEntitySelected)
+	{
+		if (key == GLFW_KEY_DELETE)
+		{
+			EditorApplication::ActionPlayer->Submit<DeleteEntityAction>(SelectedEntity);
+		}
+		
+		if (mods == GLFW_MOD_CONTROL)
+		{
+			//Duplicate
+			if (key == GLFW_KEY_D && action == GLFW_PRESS)
+			{
+				EditorApplication::ActionPlayer->Submit<DuplicateEntityAction>(SelectedEntity);
+
+				//for (const auto& entity : SceneGraphFrame::MultiSelectedEntity())
+				//{
+				//	SceneGraphFrame::ClearSelection();
+				//	ActionSystem::Submit<DuplicateEntityAction>(entity);
+				//}
+			}
+		}
+	
+	}
+	
+	if (mods == GLFW_MOD_CONTROL)
+	{
+		//Select ALL
+		if (key == GLFW_KEY_A && action == GLFW_PRESS)
+		{
+			//for (auto& entity : SceneManager::CurrenScene()->Entities)
+			///{
+			//	SceneGraphFrame::AddToSelection(entity->ID);
+			//}
+		}
+		//New
+		if (key == GLFW_KEY_N && action == GLFW_PRESS)
+		{
+			//FRACTURE_INFO("New");
+			//NewProject();
+
+		}
+		//Open
+		if (key == GLFW_KEY_O && action == GLFW_PRESS)
+		{
+			//FRACTURE_INFO("Open");
+			//std::string path = FileDialogue::OpenFile(".fracture");
+			//if (!path.empty())
+			//{
+			//	//OpenProject(path);
+			//}
+		}
+		//Save
+		if (key == GLFW_KEY_S && action == GLFW_PRESS)
+		{			
+			EditorApplication::Dispatcher()->Publish(std::make_shared<SaveProjectEvent>());
+		}
+		//Undo
+		//if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+		//{
+		//	ActionSystem::UndoLast();
+		//}
+		//Redo
+		//if (key == GLFW_KEY_Y && action == GLFW_PRESS)
+		//{
+		//	ActionSystem::RedoLast();
+		//}
+	}
+	
 }

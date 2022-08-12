@@ -45,6 +45,8 @@ namespace Fracture
 		void OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt);
 		void OnReleaseEntityFromEdit(const std::shared_ptr<ReleaseEntityFromEdit>& evnt);
 
+		static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 		std::unique_ptr<ScenegraphView> mSceneGraph;
 		std::unique_ptr<Inspector> mInspector;
 		std::unique_ptr<Viewport> mSceneView;
@@ -59,8 +61,8 @@ namespace Fracture
 		float t;
 		float currentTime;
 		float dt = 1.0f / 60.0f;
-		bool IsEntitySelected;
-		UUID SelectedEntity;
+		static bool IsEntitySelected;
+		static UUID SelectedEntity;
 	};
 
 

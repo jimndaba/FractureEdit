@@ -36,6 +36,12 @@ namespace Fracture
 		bool Handled();
 		RenderGraph& Graph;
 	};
+
+	struct SaveProjectEvent : public Event
+	{
+		SaveProjectEvent();
+		bool Handled();
+	};
 }
 
 #endif

@@ -155,6 +155,26 @@ bool Fracture::UIElement::PropertyEx(const std::string& label, std::string& outS
 	return false;
 }
 
+bool Fracture::UIElement::Property(const std::string& label, const std::string& text)
+{
+	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;
+	ImVec2 buttonSize = { lineHeight + 0.0f, lineHeight };
+
+	ImGui::PushID(EditorApplication::NextGuiID());
+
+	ImGui::TableNextColumn();
+
+	ImGui::Text(label.c_str());
+
+	ImGui::TableNextColumn();
+	{
+		ImGui::PushItemWidth(-5);
+		ImGui::Text(text.c_str());
+	}
+	ImGui::PopID();
+	return false;
+}
+
 bool Fracture::UIElement::Property(const std::string& label, bool* value)
 {
 	float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 1.5f;

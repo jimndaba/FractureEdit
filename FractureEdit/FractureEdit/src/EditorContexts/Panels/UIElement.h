@@ -19,6 +19,7 @@ namespace Fracture
 	
 	
 		bool PropertyEx(const std::string& label, std::string& outString, float columnWidth = 100.0f);
+		bool Property(const std::string& label, const std::string& text);
 		bool Property(const std::string& label, bool* value);
 		bool Property(const std::string& label, float& value, float reset_value = 0);
 		bool Property(const std::string& label, int& value, float reset_value = 0);

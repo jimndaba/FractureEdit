@@ -15,6 +15,9 @@
 #include "EditorContexts/Panels/EngineOptionsPanels.h"
 #include "Project/FractureProject.h"
 
+
+#include "EditorActions/ActionSystem.h"
+
 namespace Fracture
 {
 	class EditorApplication
@@ -56,18 +59,22 @@ namespace Fracture
 		static Eventbus* Dispatcher();
 		static Scene* CurrentScene();
 		static int NextGuiID();
+		static GameWindow* Window();
 
 		static void NewScene();
 		static void SaveScene();
 		static void OpenScene();
 
+		void OnSaveProject(const std::shared_ptr<SaveProjectEvent>& evnt);
+
 		void NewProject(const ProjectParams& path);
 		void SaveProject();
 		bool LoadProject();
 		void CloseProject();
-
+		
 		static FractureProject* CurrentProject();
 
+		static std::unique_ptr<ActionSystem> ActionPlayer;
 
 	private:
 		bool _IsProjectDirty = false;

@@ -45,6 +45,7 @@ void Fracture::TagComponentPanel::OnRender(bool* p_open)
 
 		BeginProps(2);
 		PropertyEx("Name", component->Name);
+		Property("UUID", std::to_string(component->ID));
 		EndProps();
 		ImGui::TreePop();
 	}

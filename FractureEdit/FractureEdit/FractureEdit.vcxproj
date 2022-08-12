@@ -92,6 +92,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\EditorActions\ActionSystem.cpp" />
+    <ClCompile Include="src\EditorActions\EditingActions.cpp" />
     <ClCompile Include="src\EditorActions\LevelEditorEvents.cpp" />
     <ClCompile Include="src\EditorApplication.cpp" />
     <ClCompile Include="src\EditorContexts\AssetManagerContext.cpp" />
@@ -149,6 +151,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\EditorActions\Action.h" />
+    <ClInclude Include="src\EditorActions\ActionSystem.h" />
+    <ClInclude Include="src\EditorActions\EditingActions.h" />
     <ClInclude Include="src\EditorActions\LevelEditorEvents.h" />
     <ClInclude Include="src\EditorApplication.h" />
     <ClInclude Include="src\EditorContexts\AssetManagerContext.h" />

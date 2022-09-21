@@ -4,10 +4,7 @@
 
 int main()
 {
-	Fracture::EditorApplication app = Fracture::EditorApplication();
-
+	Fracture::EditorApplication app = Fracture::EditorApplication{};
 	app.Run();
-
-
 	return 0;
 }

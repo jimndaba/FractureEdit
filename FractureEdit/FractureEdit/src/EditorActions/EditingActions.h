@@ -3,6 +3,9 @@
 #define EDITINGACTIONS_H
 
 #include "Action.h"
+#include "EditorApplication.h"
+
+
 
 namespace Fracture
 {
@@ -20,6 +23,8 @@ namespace Fracture
 	struct StaticMeshComponent;
 	struct PointlightComponent;
 	struct CameraComponent;
+	struct RigidBodyComponent;
+	struct ColliderComponent;
 
 	struct DuplicateEntityAction : public Action
 	{
@@ -34,6 +39,8 @@ namespace Fracture
 		void CopyCameraIfExists(const UUID& from, const UUID& to);
 		void CopyStaticMeshIfExists(const UUID& from, const UUID& to);
 		void CopyPointlightIfExists(const UUID& from, const UUID& to);
+		void CopyRigidBodyIfExists(const UUID& from, const UUID& to);
+		void CopyColliderIfExists(const UUID& from, const UUID& to);
 
 		std::shared_ptr<TransformComponent> Copy(UUID entity, TransformComponent* component);
 		std::shared_ptr<TagComponent> Copy(UUID entity, TagComponent* component);
@@ -41,6 +48,8 @@ namespace Fracture
 		std::shared_ptr<StaticMeshComponent> Copy(UUID entity, StaticMeshComponent* component);
 		std::shared_ptr<PointlightComponent> Copy(UUID entity, PointlightComponent* component);
 		std::shared_ptr<CameraComponent> Copy(UUID entity, CameraComponent* component);
+		std::shared_ptr<RigidBodyComponent> Copy(UUID entity, RigidBodyComponent* component);
+		std::shared_ptr<ColliderComponent> Copy(UUID entity, ColliderComponent* component);
 	};
 
 	struct DeleteEntityAction : public Action

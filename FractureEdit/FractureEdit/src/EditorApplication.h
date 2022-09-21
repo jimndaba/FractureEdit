@@ -1,14 +1,12 @@
 #pragma once
 
+#include "core/Application.h"
 #include "core/GameWindow.h"
 #include "rendering/Device.h"
 #include "assets/AssetManager.h"
-#include "scene/Scene.h"
+#include "physics/PhysicsManager.h"
 #include "EditorContexts/LevelEditor.h"
 #include "EditorContexts/RenderGraphEditor.h"
-#include "rendering/OutlineRenderer.h"
-#include "rendering/SceneRenderer.h"
-#include "rendering/DebugRenderer.h"
 #include "input/Input.h"
 #include "events/Eventbus.h"
 #include "EditorContexts/OptionsMenuPanel.h"
@@ -16,20 +14,27 @@
 #include "Project/FractureProject.h"
 
 
-#include "EditorActions/ActionSystem.h"
+
 
 namespace Fracture
 {
-	class EditorApplication
+	class ActionSystem;
+
+	class EditorApplication :public Application
 	{
 		static std::unique_ptr<GameWindow> mWindow;
-		std::unique_ptr<Device> mGraphicsDevice;
-		std::unique_ptr<LevelEditor> mLevelEditor;
-		std::unique_ptr<RenderGraphEditor> mRendergraphEditor;
 		static std::unique_ptr<AssetManager> Assets;
+		std::shared_ptr<Fracture::RenderGraph> mGraph;
+		std::unique_ptr<Device> mGraphicsDevice;
+		std::unique_ptr<PhysicsManager> mPhysicsManager;
+
+
+		std::unique_ptr<LevelEditor> mLevelEditor;
+		std::unique_ptr<RenderGraphEditor> mRendergraphEditor;		
 		std::unique_ptr<EngineOpitonsContext> mEngineOptions;
 		static std::unique_ptr<FractureProject> mProject;
-		std::shared_ptr<Fracture::RenderGraph> mGraph;
+	
+
 
 		Texture* mPlayIcon;
 		Texture* mPauseIcon;
@@ -37,7 +42,6 @@ namespace Fracture
 
 		static std::unique_ptr<Eventbus> EventDispatcher;
 		static std::unique_ptr<Input> mInput;		
-		static std::shared_ptr<Scene> mCurrentScene;
 		std::unique_ptr<NewSceneOptions> mNewSceneModal;
 		std::unique_ptr<NewProjectOptions> mNewProjectModal;
 

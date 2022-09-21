@@ -1,6 +1,8 @@
 #include "EdPCH.h"
 #include "Scenegraph.h"
 #include "EditorApplication.h"
+#include "scene/SceneManager.h"
+#include "EditorActions/ActionSystem.h"
 
 Fracture::ScenegraphView::ScenegraphView():EditingContext()
 {
@@ -41,7 +43,7 @@ void Fracture::ScenegraphView::OnRender(bool* p_open, Device* device)
 
 void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 {
-	const auto& tag = EditorApplication::CurrentScene()->GetTagComponent(entity);
+	const auto& tag = EditorApplication::GetSceneManager()->GetTagComponent(entity);
 	bool isSelected = false;
 	ImGuiTreeNodeFlags flags;
 
@@ -50,7 +52,7 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 		flags = ((Selection == entity) ? ImGuiTreeNodeFlags_Selected : isSelected) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
 
 
-		const auto& hierachy = EditorApplication::CurrentScene()->GetHierachyComponent(entity);
+		const auto& hierachy = EditorApplication::GetSceneManager()->GetHierachyComponent(entity);
 
 		if (hierachy->Children.empty())
 		{
@@ -74,7 +76,7 @@ void Fracture::ScenegraphView::DrawEntity(const UUID& entity)
 
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 		{
-			const auto& position = EditorApplication::CurrentScene()->GetTransformComponent(entity)->Position;
+			const auto& position = EditorApplication::GetSceneManager()->GetTransformComponent(entity)->Position;
 			CameraSystem::LookAt(*Viewport::ViewportCamera(),position);
 		}
 

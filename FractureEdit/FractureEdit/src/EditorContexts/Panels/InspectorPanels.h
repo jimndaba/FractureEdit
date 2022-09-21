@@ -11,7 +11,8 @@ namespace Fracture
 	struct PointlightComponent;
 	struct CameraComponent;
 	struct StaticMeshComponent;
-
+	struct RigidBodyComponent;
+	struct ColliderComponent;
 
 	struct TransfromComponentPanel :public UIElement
 	{
@@ -51,6 +52,21 @@ namespace Fracture
 		uint32_t blank_texture;
 	};
 
+	struct RigidbodyComponentPanel : public UIElement
+	{
+		RigidbodyComponentPanel(RigidBodyComponent* rigidbody);
+		void OnAttach();
+		void OnRender(bool* p_open);
+		RigidBodyComponent* component;
+	};
+
+	struct ColliderComponentPanel : public UIElement
+	{
+		ColliderComponentPanel(ColliderComponent* rigidbody);
+		void OnAttach();
+		void OnRender(bool* p_open);
+		ColliderComponent* component;
+	};
 
 }
 

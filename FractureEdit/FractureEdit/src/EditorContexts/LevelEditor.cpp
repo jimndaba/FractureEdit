@@ -2,6 +2,9 @@
 #include "LevelEditor.h"
 #include "../EditorApplication.h"
 #include "events/Eventbus.h"
+#include "EditorActions/ActionSystem.h"
+#include "EditorActions/EditingActions.h"
+#include "EditorActions/LevelEditorEvents.h"
 
 bool Fracture::LevelEditor::IsEntitySelected;
 Fracture::UUID Fracture::LevelEditor::SelectedEntity;

@@ -7,6 +7,10 @@
 #include "EditorApplication.h"
 #include "scene/Scene.h"
 #include "core/Math.h"
+#include "scene/SceneManager.h"
+#include "EditorActions/ActionSystem.h"
+#include "EditorActions/LevelEditorEvents.h"
+#include "rendering/StaticMesh.h"
 
 int Fracture::Viewport::gizmoMode;
 std::unique_ptr<Fracture::CameraComponent> Fracture::Viewport::mViewportCamera;
@@ -164,15 +168,15 @@ void Fracture::Viewport::UpdateCamera(float dt)
 
 void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 {
-	if(mCurrentScene)
+	if(EditorApplication::GetSceneManager()->CurrentScene())
 	{
 		if (IsEditing)
 		{
-			mOutlineRenderer->DrawOutline(SelectedEntity, mCurrentScene);
+			mOutlineRenderer->DrawOutline(SelectedEntity, EditorApplication::GetSceneManager()->CurrentScene());
 		}
 		if (mGraph)
 		{
-			mSceneRenderer->Begin(mCurrentScene, mViewportCamera.get(), Device::GeometryContext());
+			mSceneRenderer->Begin(EditorApplication::GetSceneManager()->CurrentScene(), mViewportCamera.get(), Device::GeometryContext());
 			mSceneRenderer->End(Device::GeometryContext());
 
 
@@ -303,11 +307,11 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 			if (mouse.x > -1.0f && mouse.x < 1.0f && mouse.y > -1.0f && mouse.y < 1.0f)
 			{
 				const auto& camera = mViewportCamera.get();
-				Ray ray = CameraSystem::ScreenPointToRay(*camera, mouse, width, height);
+				Ray ray = CameraSystem::ScreenPointToRay(*camera, mouse, (int)width, (int)height);
 				for (const auto& component : EditorApplication::CurrentScene()->StaticMeshComponents)
 				{
 					float outT;
-					const auto& transform = EditorApplication::CurrentScene()->GetTransformComponent(component->ID);
+					const auto& transform = EditorApplication::GetSceneManager()->GetTransformComponent(component->ID);
 					if (CameraSystem::RaycastBVH(ray, component->Mesh->bvhRoot, transform->WorldMatrix, outT))
 					{
 						SelectionContext context;
@@ -322,7 +326,7 @@ void Fracture::Viewport::OnRender(bool* p_open, Fracture::Device* device)
 				for (const auto& component : EditorApplication::CurrentScene()->PointlightComponents)
 				{
 					float outT;
-					const auto& transform = EditorApplication::CurrentScene()->GetTransformComponent(component->ID);
+					const auto& transform = EditorApplication::GetSceneManager()->GetTransformComponent(component->ID);
 					if (CameraSystem::RaycastBVH(ray, DebugRenderer::GetBillboadMesh()->bvhRoot, transform->WorldMatrix, outT))
 					{
 						SelectionContext context;
@@ -431,10 +435,10 @@ void Fracture::Viewport::OnSetRenderGraph(const std::shared_ptr<SetRenderGraph>&
 
 void Fracture::Viewport::OnSubmitEntityForEdit(const std::shared_ptr<SubmitEntityForEdit>& evnt)
 {
-	if (EditorApplication::CurrentScene()->HasTransformComponent(evnt->Entity))
+	if (EditorApplication::GetSceneManager()->HasTransformComponent(evnt->Entity))
 	{
 		IsEditing = true;
-		mTransform =  EditorApplication::CurrentScene()->GetTransformComponent(evnt->Entity);
+		mTransform = EditorApplication::GetSceneManager()->GetTransformComponent(evnt->Entity);
 		SelectedEntity = evnt->Entity;
 	}
 }

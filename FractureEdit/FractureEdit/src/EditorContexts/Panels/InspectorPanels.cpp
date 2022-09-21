@@ -2,6 +2,8 @@
 #include "InspectorPanels.h"
 #include "core/Components.h"
 #include "EditorApplication.h"
+#include "core/Entity.h"
+#include "rendering/StaticMesh.h"
 
 Fracture::TransfromComponentPanel::TransfromComponentPanel(TransformComponent* transform):
 	component(transform)
@@ -292,6 +294,62 @@ void Fracture::StaticMeshComponentPanel::OnRender(bool* p_open)
 
 		ImGui::TreePop();
 
+	}
+	ImGui::PopID();
+}
+
+Fracture::RigidbodyComponentPanel::RigidbodyComponentPanel(RigidBodyComponent* rigidbody):component(rigidbody)
+{
+}
+
+void Fracture::RigidbodyComponentPanel::OnAttach()
+{
+}
+
+void Fracture::RigidbodyComponentPanel::OnRender(bool* p_open)
+{
+	float button_size = 100;
+	ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_DefaultOpen;
+	ImGui::PushID(EditorApplication::NextGuiID());
+	bool open = ImGui::TreeNodeEx("RigidBody", tree_flags);
+	if (open)
+	{
+		BeginProps(2);
+		Property("Angular Drag", component->AngularDrag);
+		Property("Linear Drag", component->LinearDrag);
+		Property("Mass", component->Mass);
+		Property("Is Kinematic", &component->isKinematic);
+		//ColorProperty("Diffuse", component->Diffuse);
+		//ColorProperty("Specular", component->Specular);
+		EndProps();
+		ImGui::TreePop();
+	}
+	ImGui::PopID();
+}
+
+Fracture::ColliderComponentPanel::ColliderComponentPanel(ColliderComponent* collider):component(collider)
+{
+}
+
+void Fracture::ColliderComponentPanel::OnAttach()
+{
+}
+
+void Fracture::ColliderComponentPanel::OnRender(bool* p_open)
+{
+	float button_size = 100;
+	ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_DefaultOpen;
+	ImGui::PushID(EditorApplication::NextGuiID());
+	bool open = ImGui::TreeNodeEx("Collider", tree_flags);
+	if (open)
+	{
+		BeginProps(2);
+		Property("Height", component->mHeight);
+		Property("Offset", component->mOffset);
+		Property("Radius", component->mRadius);
+		ColorProperty("Size", component->mSize);
+		EndProps();
+		ImGui::TreePop();
 	}
 	ImGui::PopID();
 }

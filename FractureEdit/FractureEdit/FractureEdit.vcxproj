@@ -57,10 +57,11 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;$(SolutionDir)vendor\includes\pxshared;E:\GameDev\Fracture\vendor\includes\physx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>EdPCH.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -77,10 +78,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\GameDev\Fracture\src;E:\GameDev\FractureEdit\FractureEdit\vendor\includes;E:\GameDev\Fracture\vendor\includes;E:\GameDev\FractureEdit\FractureEdit\src;E:\GameDev\Fracture\vendor\includes\physx;E:\GameDev\Fracture\vendor\includes\pxshared;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>EdPCH.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
